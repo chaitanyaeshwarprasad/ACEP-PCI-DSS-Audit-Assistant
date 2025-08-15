@@ -6,7 +6,6 @@
 ![Python](https://img.shields.io/badge/Python-3.8+-green?style=for-the-badge&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-2.3+-red?style=for-the-badge&logo=flask&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3+-purple?style=for-the-badge&logo=bootstrap&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=opensource&logoColor=white)
 
 **Professional Payment Card Industry Compliance & PCI DSS Audit Management Tool**
 
@@ -329,9 +328,7 @@ We welcome contributions from the cybersecurity and compliance communities!
 
 ---
 
-## 📄 **License**
 
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
