@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}Evidence - ACEP PCI DSS Audit Assistant{% endblock %}
+
+{% block content %}
+<div class="modern-evidence">
+    <!-- Evidence Header -->
+    <div class="evidence-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="evidence-title">Evidence Management</h1>
+                <p class="evidence-subtitle">Upload, organize, and manage your PCI DSS compliance documentation</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary upload-trigger" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                    <i class="bi bi-plus-circle"></i>
+                    Upload Evidence
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Evidence Overview Stats -->
+    <div class="evidence-stats">
+        <div class="stat-item">
+            <div class="stat-icon">
+                <i class="bi bi-files"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ evidence_list|length }}</div>
+                <div class="stat-label">Total Files</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon linked">
+                <i class="bi bi-link-45deg"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ evidence_list|selectattr('requirement_id', 'defined')|list|length }}</div>
+                <div class="stat-label">Linked to Requirements</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon recent">
+                <i class="bi bi-calendar-plus"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ today_uploads }}</div>
+                <div class="stat-label">Today's Uploads</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon storage">
+                <i class="bi bi-hdd-stack"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ ((evidence_list|sum(attribute='file_size') or 0) / 1024 / 1024)|round(1) }}</div>
+                <div class="stat-label">Total MB Used</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Evidence Files Section -->
+    <div class="evidence-section">
+        <div class="section-header">
+            <h3 class="section-title">Evidence Files</h3>
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="evidence-search" placeholder="Search files or requirements...">
+                </div>
+            </div>
+        </div>
+        
+        {% if evidence_list %}
+        <div class="evidence-grid" id="evidence-grid">
+            {% for evidence in evidence_list %}
+            <div class="evidence-card" data-filename="{{ evidence.original_filename|lower }}" data-requirement="{{ evidence.requirement_id|lower }}">
+                <div class="file-preview">
+                    <div class="file-icon">
+                        <i class="bi {{ evidence.original_filename | get_file_icon }}"></i>
+                    </div>
+                    <div class="file-type">{{ evidence.original_filename.split('.')[-1].upper() if '.' in evidence.original_filename else 'FILE' }}</div>
+                </div>
+                
+                <div class="file-info">
+                    <h4 class="file-name" title="{{ evidence.original_filename }}">
+                        {{ evidence.original_filename[:30] }}{% if evidence.original_filename|length > 30 %}...{% endif %}
+                    </h4>
+                    
+                    <div class="file-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Requirement:</span>
+                            <span class="requirement-badge">{{ evidence.requirement_id }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Size:</span>
+                            <span class="file-size">{{ evidence.file_size | format_file_size }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Uploaded:</span>
+                            <span class="upload-date">{{ evidence.uploaded_at[:10] }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">By:</span>
+                            <span class="uploader">{{ evidence.uploaded_by }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="file-actions">
+                    <a href="{{ url_for('download_evidence', evidence_id=evidence.id) }}" 
+                       class="action-btn download-btn" title="Download">
+                        <i class="bi bi-download"></i>
+                        Download
+                    </a>
+                    <button class="action-btn delete-btn" 
+                            onclick="confirmDelete({{ evidence.id }})" title="Delete">
+                        <i class="bi bi-trash"></i>
+                        Delete
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-evidence-state">
+            <div class="empty-icon">
+                <i class="bi bi-cloud-upload"></i>
+            </div>
+            <h3>No Evidence Files Yet</h3>
+            <p>Start building your compliance documentation by uploading your first evidence file</p>
+            <div class="empty-actions">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                    <i class="bi bi-plus-circle"></i>
+                    Upload Your First File
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modern Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content modern-modal">
+            <form method="POST" action="{{ url_for('upload_evidence') }}" enctype="multipart/form-data" id="upload-form">
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                        <h3 class="modal-title">Upload Evidence</h3>
+                        <p class="modal-subtitle">Add compliance documentation to your PCI DSS assessment</p>
+                    </div>
+                    <button type="button" class="modal-close" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="upload-form">
+                        <div class="form-section">
+                            <label for="requirement_id" class="form-label">
+                                <i class="bi bi-link-45deg"></i>
+                                PCI DSS Requirement
+                            </label>
+                            <select class="form-control modern-select" id="requirement_id" name="requirement_id" required>
+                                <option value="">Choose a requirement to link this evidence...</option>
+                                {% for requirement in requirements %}
+                                <option value="{{ requirement.requirement_id }}">
+                                    {{ requirement.requirement_id }} - {{ requirement.title[:60] }}{% if requirement.title|length > 60 %}...{% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="description" class="form-label">
+                                <i class="bi bi-card-text"></i>
+                                Description
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Briefly describe this evidence document..."></textarea>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="file" class="form-label">
+                                <i class="bi bi-file-earmark-arrow-up"></i>
+                                Evidence File
+                            </label>
+                            <div class="file-upload-area" id="file-upload-area">
+                                <div class="upload-prompt">
+                                    <div class="upload-icon">
+                                        <i class="bi bi-cloud-upload"></i>
+                                    </div>
+                                    <h4>Drop your file here or click to browse</h4>
+                                    <p>Supports PDF, Word, Excel, PowerPoint, Images, Text files, and Archives</p>
+                                    <p class="file-limit">Maximum file size: 16MB</p>
+                                </div>
+                                <input type="file" class="file-input" id="file" name="file" required
+                                       accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.jpg,.jpeg,.png,.zip,.rar">
+                            </div>
+                            <div class="file-preview" id="file-preview" style="display: none;"></div>
+                        </div>
+                        
+                        <div class="upload-tips">
+                            <div class="tip-header">
+                                <i class="bi bi-lightbulb"></i>
+                                <span>Upload Tips</span>
+                            </div>
+                            <div class="tips-grid">
+                                <div class="tip-item">
+                                    <i class="bi bi-check-circle"></i>
+                                    <span>Use descriptive file names</span>
+                                </div>
+                                <div class="tip-item">
+                                    <i class="bi bi-check-circle"></i>
+                                    <span>Files are automatically timestamped</span>
+                                </div>
+                                <div class="tip-item">
+                                    <i class="bi bi-check-circle"></i>
+                                    <span>Link to specific requirements</span>
+                                </div>
+                                <div class="tip-item">
+                                    <i class="bi bi-check-circle"></i>
+                                    <span>Organize by compliance area</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-cloud-upload"></i>
+                        Upload Evidence
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Evidence search functionality with grid support
+    const searchInput = document.getElementById('evidence-search');
+    const evidenceGrid = document.getElementById('evidence-grid');
+    
+    if (searchInput && evidenceGrid) {
+        const cards = evidenceGrid.querySelectorAll('.evidence-card');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            cards.forEach(card => {
+                const fileName = card.dataset.filename || '';
+                const requirementId = card.dataset.requirement || '';
+                
+                if (fileName.includes(searchTerm) || requirementId.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Enhanced file upload with drag & drop
+    const fileUploadArea = document.getElementById('file-upload-area');
+    const fileInput = document.getElementById('file');
+    const filePreview = document.getElementById('file-preview');
+    
+    if (fileUploadArea && fileInput) {
+        // Click to upload
+        fileUploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Drag and drop
+        fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        });
+        
+        fileUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+        });
+        
+        fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(files[0]);
+            }
+        });
+        
+        // File input change
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                handleFileSelect(this.files[0]);
+            }
+        });
+    }
+    
+    function handleFileSelect(file) {
+        const filePreview = document.getElementById('file-preview');
+        const uploadPrompt = document.querySelector('.upload-prompt');
+        
+        if (file) {
+            const size = formatFileSize(file.size);
+            const type = file.type || 'Unknown type';
+            const extension = file.name.split('.').pop().toUpperCase();
+            
+            uploadPrompt.style.display = 'none';
+            filePreview.style.display = 'block';
+            filePreview.innerHTML = `
+                <div class="selected-file">
+                    <div class="file-icon-preview">
+                        <i class="bi ${getFileIcon(file.name)}"></i>
+                        <span class="file-ext">${extension}</span>
+                    </div>
+                    <div class="file-info-preview">
+                        <h4 class="file-name-preview">${file.name}</h4>
+                        <div class="file-meta">
+                            <span class="file-size-preview">${size}</span>
+                            <span class="file-type-preview">${type}</span>
+                        </div>
+                    </div>
+                    <button type="button" class="remove-file" onclick="clearFileSelection()">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            `;
+        }
+    }
+    
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const iconMap = {
+            'pdf': 'bi-file-earmark-pdf',
+            'doc': 'bi-file-earmark-word',
+            'docx': 'bi-file-earmark-word',
+            'xls': 'bi-file-earmark-excel',
+            'xlsx': 'bi-file-earmark-excel',
+            'ppt': 'bi-file-earmark-ppt',
+            'pptx': 'bi-file-earmark-ppt',
+            'txt': 'bi-file-earmark-text',
+            'jpg': 'bi-file-earmark-image',
+            'jpeg': 'bi-file-earmark-image',
+            'png': 'bi-file-earmark-image',
+            'zip': 'bi-file-earmark-zip',
+            'rar': 'bi-file-earmark-zip'
+        };
+        return iconMap[ext] || 'bi-file-earmark';
+    }
+    
+    // Auto-select requirement from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const requirementParam = urlParams.get('requirement');
+    if (requirementParam) {
+        const requirementSelect = document.getElementById('requirement_id');
+        if (requirementSelect) {
+            const option = Array.from(requirementSelect.options).find(opt => 
+                opt.value === requirementParam
+            );
+            if (option) {
+                option.selected = true;
+                const uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
+                uploadModal.show();
+            }
+        }
+    }
+});
+
+function clearFileSelection() {
+    const fileInput = document.getElementById('file');
+    const filePreview = document.getElementById('file-preview');
+    const uploadPrompt = document.querySelector('.upload-prompt');
+    
+    fileInput.value = '';
+    filePreview.style.display = 'none';
+    uploadPrompt.style.display = 'block';
+}
+
+function confirmDelete(evidenceId) {
+    if (confirm('Are you sure you want to delete this evidence file? This action cannot be undone.')) {
+        fetch(`/evidence/delete/${evidenceId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting file: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting file');
+            console.error('Error:', error);
+        });
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+</script>
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ACEP PCI DSS AUDIT ASSISTANT{% endblock %}
+
+{% block content %}
+<div class="modern-dashboard">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="dashboard-title">PCI DSS Compliance Dashboard</h1>
+                <p class="dashboard-subtitle">Monitor your payment card security compliance in real-time</p>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('audit_checklist') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                    Start Assessment
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Metrics Overview -->
+    <div class="metrics-overview">
+        <div class="primary-metric">
+            <div class="metric-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ compliance_percentage }}%</div>
+                <div class="metric-label">Overall Compliance</div>
+                <div class="metric-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ compliance_percentage }}%"></div>
+                    </div>
+                    <span class="progress-text">{{ compliant_requirements }} of {{ total_requirements }} requirements</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="secondary-metrics">
+            <div class="mini-metric">
+                <div class="mini-metric-icon text-success">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="mini-metric-content">
+                    <div class="mini-metric-value">{{ compliant_requirements }}</div>
+                    <div class="mini-metric-label">Compliant</div>
+                </div>
+            </div>
+            
+            <div class="mini-metric">
+                <div class="mini-metric-icon text-danger">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="mini-metric-content">
+                    <div class="mini-metric-value">{{ non_compliant_requirements }}</div>
+                    <div class="mini-metric-label">Non-Compliant</div>
+                </div>
+            </div>
+            
+            <div class="mini-metric">
+                <div class="mini-metric-icon text-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="mini-metric-content">
+                    <div class="mini-metric-value">{{ high_risks }}</div>
+                    <div class="mini-metric-label">High Risks</div>
+                </div>
+            </div>
+            
+            <div class="mini-metric">
+                <div class="mini-metric-icon text-muted">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="mini-metric-content">
+                    <div class="mini-metric-value">{{ not_assessed_requirements }}</div>
+                    <div class="mini-metric-label">Pending</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="dashboard-main">
+        <!-- Quick Actions Panel -->
+        <div class="actions-panel">
+            <h3 class="panel-title">Quick Actions</h3>
+            <div class="action-grid">
+                <a href="{{ url_for('audit_checklist') }}" class="action-card">
+                    <div class="action-icon">
+                        <i class="bi bi-list-check"></i>
+                    </div>
+                    <div class="action-content">
+                        <h4>Requirements</h4>
+                        <p>View and assess PCI DSS requirements</p>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('evidence') }}" class="action-card">
+                    <div class="action-icon">
+                        <i class="bi bi-file-earmark-arrow-up"></i>
+                    </div>
+                    <div class="action-content">
+                        <h4>Evidence</h4>
+                        <p>Upload compliance documentation</p>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('risk_register') }}" class="action-card">
+                    <div class="action-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="action-content">
+                        <h4>Risk Management</h4>
+                        <p>Monitor and manage security risks</p>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('reports') }}" class="action-card">
+                    <div class="action-icon">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                    <div class="action-content">
+                        <h4>Reports</h4>
+                        <p>Generate compliance reports</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Activity & Analytics -->
+        <div class="content-panels">
+            <!-- Recent Activity -->
+            <div class="activity-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Recent Activity</h3>
+                    <a href="{{ url_for('audit_checklist') }}" class="view-all-link">View All</a>
+                </div>
+                
+                {% if recent_requirements %}
+                    <div class="activity-list">
+                        {% for req in recent_requirements[:5] %}
+                        <div class="activity-item">
+                            <div class="activity-status">
+                                {% if req.status == 'Compliant' %}
+                                    <div class="status-indicator success">
+                                        <i class="bi bi-check-circle"></i>
+                                    </div>
+                                {% elif req.status == 'Not Compliant' %}
+                                    <div class="status-indicator danger">
+                                        <i class="bi bi-x-circle"></i>
+                                    </div>
+                                {% else %}
+                                    <div class="status-indicator warning">
+                                        <i class="bi bi-clock"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">{{ req.requirement_id }}</div>
+                                <div class="activity-subtitle">{{ req.title[:60] }}{% if req.title|length > 60 %}...{% endif %}</div>
+                                <div class="activity-meta">
+                                    <span>{{ req.assessed_by }}</span>
+                                    <span>{{ req.assessed_at[:10] if req.assessed_at else 'N/A' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="bi bi-inbox"></i>
+                        </div>
+                        <h4>No Recent Activity</h4>
+                        <p>Start your first assessment to see activity here</p>
+                        <a href="{{ url_for('audit_checklist') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i>
+                            Start Assessment
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Payment Card Metrics -->
+            <div class="metrics-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Payment Card Metrics</h3>
+                </div>
+                
+                <div class="payment-card-metrics">
+                    <div class="payment-card-metric">
+                        <div class="metric-circle">
+                            <div class="metric-number">{{ total_cardholder_data_types }}</div>
+                        </div>
+                        <div class="metric-info">
+                            <h4>Cardholder Data Types</h4>
+                            <p>Payment card data categories</p>
+                            <a href="{{ url_for('cardholder_data_tracking') }}" class="metric-link">
+                                <i class="bi bi-arrow-right"></i>
+                                Track Data
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-card-metric">
+                        <div class="metric-circle">
+                            <div class="metric-number">{{ total_service_providers }}</div>
+                        </div>
+                        <div class="metric-info">
+                            <h4>Service Providers</h4>
+                            <p>Third-party vendors with cardholder data access</p>
+                            <a href="{{ url_for('service_providers') }}" class="metric-link">
+                                <i class="bi bi-arrow-right"></i>
+                                Manage SPs
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update dashboard metrics periodically
+function refreshMetrics() {
+    fetch('/api/compliance-stats')
+        .then(response => response.json())
+        .then(data => {
+            // Update metric displays
+            console.log('Metrics updated:', data);
+        })
+        .catch(error => console.error('Error updating metrics:', error));
+}
+
+// Refresh every 5 minutes
+setInterval(refreshMetrics, 300000);
+</script>
+{% endblock %}

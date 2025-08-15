@@ -1,0 +1,812 @@
+{% extends "base.html" %}
+
+{% block title %}Service Providers - ACEP PCI DSS Audit Assistant{% endblock %}
+
+{% block content %}
+<div class="modern-business-associates">
+    <!-- Service Providers Header -->
+    <div class="business-associates-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="business-associates-title">Business Associate Management</h1>
+                <p class="business-associates-subtitle">Manage Business Associate relationships, contracts, and compliance monitoring</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBaModal">
+                    <i class="bi bi-plus-circle"></i>
+                    Add Business Associate
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Service Providers Overview Stats -->
+    <div class="business-associates-stats">
+        <div class="stat-item">
+            <div class="stat-icon active">
+                <i class="bi bi-building-check"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-active">0</div>
+                <div class="stat-label">Active Contracts</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon pending">
+                <i class="bi bi-clock"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-pending">0</div>
+                <div class="stat-label">Pending Review</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon compliant">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-compliant">0</div>
+                <div class="stat-label">Compliant</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon total">
+                <i class="bi bi-list-ul"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total Associates</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Service Providers Section -->
+    <div class="business-associates-section">
+        <div class="section-header">
+            <h3 class="section-title">Business Associate Directory</h3>
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="ba-search" placeholder="Search service providers...">
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-status="all">All Associates</button>
+            <button class="filter-btn" data-status="Active">Active</button>
+            <button class="filter-btn" data-status="Pending">Pending</button>
+            <button class="filter-btn" data-status="Terminated">Terminated</button>
+        </div>
+        
+        {% if service_providers %}
+        <div class="business-associates-grid" id="business-associates-grid">
+            {% for ba in service_providers %}
+            <div class="business-associate-card" data-status="{{ ba.contract_status }}" data-name="{{ ba.name|lower }}" data-contact="{{ ba.contact_person|lower }}">
+                <div class="ba-preview">
+                    <div class="ba-icon">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div class="ba-status {{ ba.contract_status|lower }}">
+                        {{ ba.contract_status }}
+                    </div>
+                </div>
+                
+                <div class="ba-info">
+                    <h4 class="ba-name" title="{{ ba.name }}">
+                        {{ ba.name[:50] }}{% if ba.name|length > 50 %}...{% endif %}
+                    </h4>
+                    
+                    <div class="ba-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Contact:</span>
+                            <span class="contact-person">
+                                {% if ba.contact_person %}
+                                {{ ba.contact_person }}
+                                {% else %}
+                                <span class="not-specified">Not specified</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Email:</span>
+                            <span class="contact-email">
+                                {% if ba.email %}
+                                {{ ba.email[:40] }}{% if ba.email|length > 40 %}...{% endif %}
+                                {% else %}
+                                <span class="not-specified">Not specified</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Phone:</span>
+                            <span class="contact-phone">
+                                {% if ba.phone %}
+                                {{ ba.phone }}
+                                {% else %}
+                                <span class="not-specified">Not specified</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Compliance:</span>
+                            <span class="compliance-status 
+                                {% if ba.compliance_status == 'Compliant' %}compliant
+                                {% elif ba.compliance_status == 'Under Review' %}under-review
+                                {% elif ba.compliance_status == 'Non-Compliant' %}non-compliant
+                                {% else %}unknown{% endif %}">
+                                {{ ba.compliance_status or 'Not assessed' }}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Last Assessment:</span>
+                            <span class="assessment-date">
+                                {{ ba.last_assessment_date or 'Never assessed' }}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Next Assessment:</span>
+                            <span class="next-assessment">
+                                {{ ba.next_assessment_date or 'Not scheduled' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ba-actions">
+                    <button class="action-btn view-btn" 
+                            data-bs-toggle="modal" data-bs-target="#baDetailModal{{ ba.id }}" 
+                            title="View Details">
+                        <i class="bi bi-eye"></i>
+                        View
+                    </button>
+                    <button class="action-btn edit-btn" 
+                            data-bs-toggle="modal" data-bs-target="#baEditModal{{ ba.id }}" 
+                            title="Edit Associate">
+                        <i class="bi bi-pencil"></i>
+                        Edit
+                    </button>
+                    <button class="action-btn assess-btn" 
+                            data-bs-toggle="modal" data-bs-target="#baAssessmentModal{{ ba.id }}" 
+                            title="Conduct Assessment">
+                        <i class="bi bi-clipboard-check"></i>
+                        Assess
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-ba-state">
+            <div class="empty-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h3>No Service Providers Added Yet</h3>
+            <p>Start building your business associate management system by adding your first associate</p>
+            <div class="empty-actions">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBaModal">
+                    <i class="bi bi-plus-circle"></i>
+                    Add Your First Business Associate
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Business Associate Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card stat-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>
+                        Business Associate Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <div class="summary-item">
+                                <div class="summary-icon">
+                                    <i class="bi bi-building text-primary"></i>
+                                </div>
+                                <div class="summary-number text-primary" id="total-count">{{ service_providers|length }}</div>
+                                <div class="summary-label">Total Associates</div>
+                                <small class="text-muted">All relationships</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="summary-item">
+                                <div class="summary-icon">
+                                    <i class="bi bi-check-circle text-success"></i>
+                                </div>
+                                <div class="summary-number text-success" id="active-count">0</div>
+                                <div class="summary-label">Active Contracts</div>
+                                <small class="text-muted">Currently active</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="summary-item">
+                                <div class="summary-icon">
+                                    <i class="bi bi-shield-check text-info"></i>
+                                </div>
+                                <div class="summary-number text-info" id="compliant-count">0</div>
+                                <div class="summary-label">Compliant</div>
+                                <small class="text-muted">Meeting standards</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="summary-item">
+                                <div class="summary-icon">
+                                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                                </div>
+                                <div class="summary-number text-warning" id="review-count">0</div>
+                                <div class="summary-label">Under Review</div>
+                                <small class="text-muted">Needs assessment</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Compliance Monitoring -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card stat-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-check me-2"></i>
+                        Compliance Monitoring
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-warning mb-3">Upcoming Assessments</h6>
+                            <div id="upcoming-assessments">
+                                <p class="text-muted">No upcoming assessments scheduled</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-info mb-3">Recent Assessments</h6>
+                            <div id="recent-assessments">
+                                <p class="text-muted">No recent assessments found</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary me-3">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Dashboard
+            </a>
+            <a href="{{ url_for('cardholder_data_tracking') }}" class="btn btn-primary me-3">
+                <i class="bi bi-shield-lock me-2"></i>
+                Cardholder Data Tracking
+            </a>
+            <a href="{{ url_for('reports') }}" class="btn btn-success">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                Generate Report
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Business Associate Detail Modals -->
+{% for ba in service_providers %}
+<div class="modal fade" id="baDetailModal{{ ba.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-building me-2"></i>
+                    Business Associate Details: {{ ba.name }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Basic Information</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Name:</strong></td>
+                                <td>{{ ba.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Contact Person:</strong></td>
+                                <td>{{ ba.contact_person or 'Not specified' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>{{ ba.email or 'Not specified' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phone:</strong></td>
+                                <td>{{ ba.phone or 'Not specified' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info">Contract & Compliance</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Contract Status:</strong></td>
+                                <td>
+                                    {% if ba.contract_status == 'Active' %}
+                                        <span class="badge bg-success">{{ ba.contract_status }}</span>
+                                    {% elif ba.contract_status == 'Pending' %}
+                                        <span class="badge bg-warning">{{ ba.contract_status }}</span>
+                                    {% elif ba.contract_status == 'Terminated' %}
+                                        <span class="badge bg-danger">{{ ba.contract_status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ ba.contract_status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Compliance Status:</strong></td>
+                                <td>
+                                    {% if ba.compliance_status == 'Compliant' %}
+                                        <span class="badge bg-success">{{ ba.compliance_status }}</span>
+                                    {% elif ba.compliance_status == 'Under Review' %}
+                                        <span class="badge bg-warning">{{ ba.compliance_status }}</span>
+                                    {% elif ba.compliance_status == 'Non-Compliant' %}
+                                        <span class="badge bg-danger">{{ ba.compliance_status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ ba.compliance_status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Last Assessment:</strong></td>
+                                <td>{{ ba.last_assessment_date or 'Never assessed' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Next Assessment:</strong></td>
+                                <td>{{ ba.next_assessment_date or 'Not scheduled' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#baEditModal{{ ba.id }}" data-bs-dismiss="modal">
+                    <i class="bi bi-pencil me-2"></i>
+                    Edit
+                </button>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#baAssessmentModal{{ ba.id }}" data-bs-dismiss="modal">
+                    <i class="bi bi-clipboard-check me-2"></i>
+                    Schedule Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Add Business Associate Modal -->
+<div class="modal fade" id="addBaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content modern-modal">
+            <form method="POST" action="{{ url_for('add_service_provider') }}" id="add-ba-form">
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                        <h3 class="modal-title">Add Business Associate</h3>
+                        <p class="modal-subtitle">Add a new Business Associate to your compliance monitoring</p>
+                    </div>
+                    <button type="button" class="modal-close" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="add-ba-form">
+                        <div class="form-section">
+                            <label for="ba-name" class="form-label">
+                                <i class="bi bi-building"></i>
+                                Business Associate Name
+                            </label>
+                            <input type="text" class="form-control modern-input" id="ba-name" name="name" required>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="ba-contact" class="form-label">
+                                <i class="bi bi-person"></i>
+                                Contact Person
+                            </label>
+                            <input type="text" class="form-control modern-input" id="ba-contact" name="contact_person" required>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="ba-email" class="form-label">
+                                <i class="bi bi-envelope"></i>
+                                Email Address
+                            </label>
+                            <input type="email" class="form-control modern-input" id="ba-email" name="email" required>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="ba-phone" class="form-label">
+                                <i class="bi bi-telephone"></i>
+                                Phone Number
+                            </label>
+                            <input type="tel" class="form-control modern-input" id="ba-phone" name="phone" required>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="ba-contract-status" class="form-label">
+                                <i class="bi bi-file-text"></i>
+                                Contract Status
+                            </label>
+                            <select class="form-control modern-select" id="ba-contract-status" name="contract_status" required>
+                                <option value="">Choose contract status...</option>
+                                <option value="Active">Active</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Terminated">Terminated</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="ba-compliance-status" class="form-label">
+                                <i class="bi bi-shield-check"></i>
+                                Compliance Status
+                            </label>
+                            <select class="form-control modern-select" id="ba-compliance-status" name="compliance_status" required>
+                                <option value="">Choose compliance status...</option>
+                                <option value="Compliant">Compliant</option>
+                                <option value="Non-Compliant">Non-Compliant</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Not Assessed">Not Assessed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="ba-last-assessment" class="form-label">
+                                <i class="bi bi-calendar-check"></i>
+                                Last Assessment Date
+                            </label>
+                            <input type="date" class="form-control modern-input" id="ba-last-assessment" name="last_assessment_date">
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="ba-next-assessment" class="form-label">
+                                <i class="bi bi-calendar-event"></i>
+                                Next Assessment Date
+                            </label>
+                            <input type="date" class="form-control modern-input" id="ba-next-assessment" name="next_assessment_date">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        Add Business Associate
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Business Associate Modals -->
+{% for ba in service_providers %}
+<div class="modal fade" id="baEditModal{{ ba.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content modern-modal">
+            <form method="POST" action="{{ url_for('edit_service_provider', sp_id=ba.id) }}" id="edit-ba-form-{{ ba.id }}">
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                        <h3 class="modal-title">Edit Business Associate</h3>
+                        <p class="modal-subtitle">Update information for {{ ba.name }}</p>
+                    </div>
+                    <button type="button" class="modal-close" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="edit-ba-form">
+                        <div class="form-section">
+                            <label for="edit-ba-name-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-building"></i>
+                                Business Associate Name
+                            </label>
+                            <input type="text" class="form-control modern-input" id="edit-ba-name-{{ ba.id }}" name="name" value="{{ ba.name }}" required>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="edit-ba-contact-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-person"></i>
+                                Contact Person
+                            </label>
+                            <input type="text" class="form-control modern-input" id="edit-ba-contact-{{ ba.id }}" name="contact_person" value="{{ ba.contact_person or '' }}" required>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="edit-ba-email-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-envelope"></i>
+                                Email Address
+                            </label>
+                            <input type="email" class="form-control modern-input" id="edit-ba-email-{{ ba.id }}" name="email" value="{{ ba.email or '' }}" required>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="edit-ba-phone-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-telephone"></i>
+                                Phone Number
+                            </label>
+                            <input type="tel" class="form-control modern-input" id="edit-ba-phone-{{ ba.id }}" name="phone" value="{{ ba.phone or '' }}" required>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="edit-ba-contract-status-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-file-text"></i>
+                                Contract Status
+                            </label>
+                            <select class="form-control modern-select" id="edit-ba-contract-status-{{ ba.id }}" name="contract_status" required>
+                                <option value="Active" {% if ba.contract_status == 'Active' %}selected{% endif %}>Active</option>
+                                <option value="Pending" {% if ba.contract_status == 'Pending' %}selected{% endif %}>Pending</option>
+                                <option value="Terminated" {% if ba.contract_status == 'Terminated' %}selected{% endif %}>Terminated</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="edit-ba-compliance-status-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-shield-check"></i>
+                                Compliance Status
+                            </label>
+                            <select class="form-control modern-select" id="edit-ba-compliance-status-{{ ba.id }}" name="compliance_status" required>
+                                <option value="Compliant" {% if ba.compliance_status == 'Compliant' %}selected{% endif %}>Compliant</option>
+                                <option value="Non-Compliant" {% if ba.compliance_status == 'Non-Compliant' %}selected{% endif %}>Non-Compliant</option>
+                                <option value="Under Review" {% if ba.compliance_status == 'Under Review' %}selected{% endif %}>Under Review</option>
+                                <option value="Not Assessed" {% if ba.compliance_status == 'Not Assessed' %}selected{% endif %}>Not Assessed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="edit-ba-last-assessment-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-calendar-check"></i>
+                                Last Assessment Date
+                            </label>
+                            <input type="date" class="form-control modern-input" id="edit-ba-last-assessment-{{ ba.id }}" name="last_assessment_date" value="{{ ba.last_assessment_date or '' }}">
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="edit-ba-next-assessment-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-calendar-event"></i>
+                                Next Assessment Date
+                            </label>
+                            <input type="date" class="form-control modern-input" id="edit-ba-next-assessment-{{ ba.id }}" name="next_assessment_date" value="{{ ba.next_assessment_date or '' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        Update Business Associate
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Assessment Modal -->
+<div class="modal fade" id="baAssessmentModal{{ ba.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content modern-modal">
+            <form method="POST" action="{{ url_for('edit_service_provider', sp_id=ba.id) }}" id="assessment-form-{{ ba.id }}">
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                        <h3 class="modal-title">Conduct Assessment</h3>
+                        <p class="modal-subtitle">Assess compliance for {{ ba.name }}</p>
+                    </div>
+                    <button type="button" class="modal-close" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="assessment-form">
+                        <div class="form-section">
+                            <label for="assessment-compliance-status-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-shield-check"></i>
+                                Compliance Status
+                            </label>
+                            <select class="form-control modern-select" id="assessment-compliance-status-{{ ba.id }}" name="compliance_status" required>
+                                <option value="">Choose compliance status...</option>
+                                <option value="Compliant">Compliant</option>
+                                <option value="Non-Compliant">Non-Compliant</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Not Assessed">Not Assessed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="assessment-date-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-calendar-check"></i>
+                                Assessment Date
+                            </label>
+                            <input type="date" class="form-control modern-input" id="assessment-date-{{ ba.id }}" name="assessment_date" required>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="assessment-notes-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-card-text"></i>
+                                Assessment Notes
+                            </label>
+                            <textarea class="form-control modern-input" id="assessment-notes-{{ ba.id }}" name="assessment_notes" rows="4" placeholder="Enter assessment findings and notes..."></textarea>
+                        </div>
+                        
+                        <div class="form-section">
+                            <label for="next-assessment-date-{{ ba.id }}" class="form-label">
+                                <i class="bi bi-calendar-event"></i>
+                                Next Assessment Date
+                            </label>
+                            <input type="date" class="form-control modern-input" id="next-assessment-date-{{ ba.id }}" name="next_assessment_date">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        Complete Assessment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<style>
+.summary-item {
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summary-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.summary-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.summary-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.summary-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.contact-info {
+    font-size: 0.9rem;
+}
+
+.contact-info div {
+    margin-bottom: 0.25rem;
+}
+</style>
+
+<script>
+// Update service providers stats
+function updateBaStats() {
+    const cards = document.querySelectorAll('.business-associate-card');
+    let active = 0, pending = 0, compliant = 0;
+    
+    cards.forEach(card => {
+        const status = card.dataset.status;
+        const complianceStatus = card.querySelector('.compliance-status').textContent;
+        
+        if (status === 'Active') active++;
+        if (status === 'Pending') pending++;
+        if (complianceStatus === 'Compliant') compliant++;
+    });
+    
+    // Update stats
+    document.getElementById('stat-active').textContent = active;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-compliant').textContent = compliant;
+    document.getElementById('stat-total').textContent = cards.length;
+}
+
+// Search functionality
+function setupBaSearch() {
+    const searchInput = document.getElementById('ba-search');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const cards = document.querySelectorAll('.business-associate-card');
+            
+            cards.forEach(card => {
+                const name = card.dataset.name || '';
+                const contact = card.dataset.contact || '';
+                
+                if (name.includes(searchTerm) || contact.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+}
+
+// Filter functionality
+function setupBaFilters() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active state
+            filterButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const status = this.dataset.status;
+            const cards = document.querySelectorAll('.business-associate-card');
+            
+            cards.forEach(card => {
+                if (status === 'all' || card.dataset.status === status) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    updateBaStats();
+    setupBaSearch();
+    setupBaFilters();
+});
+</script>
+{% endblock %}

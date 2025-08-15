@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - ACEP PCI DSS Audit Assistant{% endblock %}
+
+{% block content %}
+<div class="modern-reports">
+    <!-- Reports Header -->
+    <div class="reports-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="reports-title">PCI DSS Compliance Reports & Analytics</h1>
+<p class="reports-subtitle">Generate comprehensive PCI DSS v4.0 compliance reports and analytics</p>
+            </div>
+            <div class="header-actions">
+                <form method="POST" action="{{ url_for('generate_report') }}" target="_blank" class="d-inline" onsubmit="console.log('Submitting header compliance report form')">
+                    <input type="hidden" name="report_type" value="compliance">
+                    <button type="submit" class="btn btn-primary" onclick="console.log('Header compliance report button clicked')">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        Generate Full Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reports Overview Stats -->
+    <div class="reports-stats">
+        <div class="stat-item">
+            <div class="stat-icon compliance">
+                <i class="bi bi-file-text"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-compliance">3</div>
+                <div class="stat-label">Report Types</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon requirements">
+                <i class="bi bi-list-check"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-requirements">-</div>
+                <div class="stat-label">Total Requirements</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon risks">
+                <i class="bi bi-shield-exclamation"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-risks">-</div>
+                <div class="stat-label">Total Risks</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon evidence">
+                <i class="bi bi-files"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-evidence">-</div>
+                <div class="stat-label">Evidence Files</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Types Section -->
+    <div class="reports-section">
+        <div class="section-header">
+            <h3 class="section-title">Available Report Types</h3>
+            <div class="section-description">
+                Choose from our comprehensive PCI DSS compliance reporting options
+            </div>
+        </div>
+        
+        <div class="reports-grid" id="reports-grid">
+            <div class="report-card" data-report-type="compliance">
+                <div class="report-preview">
+                    <div class="report-icon">
+                        <i class="bi bi-file-text"></i>
+                    </div>
+                    <div class="report-type">Compliance</div>
+                </div>
+                
+                <div class="report-info">
+                    <h4 class="report-name">PCI DSS Compliance Summary Report</h4>
+                    <p class="report-description">
+                        Comprehensive overview of all PCI DSS v4.0 requirement assessments, compliance status, and key findings.
+                    </p>
+                    
+                    <div class="report-features">
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Requirement assessment status</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Compliance percentage</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Non-compliant requirements</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Assessment notes</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-actions">
+                    <form method="POST" action="{{ url_for('generate_report') }}" target="_blank" onsubmit="console.log('Submitting compliance report form')">
+                        <input type="hidden" name="report_type" value="compliance">
+                        <button type="submit" class="action-btn generate-btn" onclick="console.log('Compliance report button clicked')">
+                            <i class="bi bi-download"></i>
+                            Generate Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="report-card" data-report-type="risk">
+                <div class="report-preview">
+                    <div class="report-icon">
+                        <i class="bi bi-shield-exclamation"></i>
+                    </div>
+                    <div class="report-type">Risk Assessment</div>
+                </div>
+                
+                <div class="report-info">
+                    <h4 class="report-name">PCI DSS Risk Assessment Report</h4>
+                    <p class="report-description">
+                        Detailed risk register with PCI DSS-specific risk scores, mitigation strategies, and risk heat map.
+                    </p>
+                    
+                    <div class="report-features">
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Risk register table</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Risk heat map</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Risk scoring matrix</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Mitigation strategies</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-actions">
+                    <form method="POST" action="{{ url_for('generate_report') }}" target="_blank">
+                        <input type="hidden" name="report_type" value="risk">
+                        <button type="submit" class="action-btn generate-btn">
+                            <i class="bi bi-download"></i>
+                            Generate Risk Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="report-card" data-report-type="evidence">
+                <div class="report-preview">
+                    <div class="report-icon">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                    <div class="report-type">Evidence</div>
+                </div>
+                
+                <div class="report-info">
+                    <h4 class="report-name">PCI DSS Evidence Documentation</h4>
+                    <p class="report-description">
+                        Summary of all uploaded evidence files linked to specific PCI DSS v4.0 requirements.
+                    </p>
+                    
+                    <div class="report-features">
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Evidence inventory</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Requirement mappings</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>File metadata</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="bi bi-check2"></i>
+                            <span>Upload statistics</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-actions">
+                    <form method="POST" action="{{ url_for('generate_report') }}" target="_blank">
+                        <input type="hidden" name="report_type" value="evidence">
+                        <button type="submit" class="action-btn generate-btn">
+                            <i class="bi bi-download"></i>
+                            Generate Evidence Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Preview Section -->
+    <div class="reports-section">
+        <div class="section-header">
+            <h3 class="section-title">Report Preview & Analytics</h3>
+            <div class="section-description">
+                Live overview of your PCI DSS compliance status and key metrics
+            </div>
+        </div>
+        
+        <div class="preview-grid">
+            <div class="preview-card">
+                <div class="preview-header">
+                    <h4 class="preview-title">Compliance Overview</h4>
+                    <div class="preview-actions">
+                        <button class="action-btn refresh-btn" onclick="refreshPreview()" title="Refresh Data">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                        <button class="action-btn print-btn" onclick="exportPreview()" title="Print Preview">
+                            <i class="bi bi-printer"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="preview-content">
+                    <div class="compliance-progress">
+                        <div class="progress-label">Overall Compliance</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="compliance-progress">
+                                <span class="progress-text" id="compliance-percentage">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="compliance-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="preview-compliant">-</div>
+                            <div class="stat-label">Compliant</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="preview-non-compliant">-</div>
+                            <div class="stat-label">Non-Compliant</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="preview-not-applicable">-</div>
+                            <div class="stat-label">Not Applicable</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="preview-not-assessed">-</div>
+                            <div class="stat-label">Not Assessed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview-card">
+                <div class="preview-header">
+                    <h4 class="preview-title">Quick Metrics</h4>
+                </div>
+                
+                <div class="preview-content">
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <div class="metric-icon">
+                                <i class="bi bi-list-check"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="preview-total-requirements">-</div>
+                                <div class="metric-label">Total Requirements</div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <div class="metric-icon">
+                                <i class="bi bi-shield-exclamation"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="preview-total-risks">-</div>
+                                <div class="metric-label">Total Risks</div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <div class="metric-icon">
+                                <i class="bi bi-files"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="preview-total-evidence">-</div>
+                                <div class="metric-label">Evidence Files</div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <div class="metric-icon">
+                                <i class="bi bi-building"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="preview-total-ba">-</div>
+                                <div class="metric-label">Service Providers</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview-note">
+            <i class="bi bi-info-circle"></i>
+            This is a quick preview. Generate the full report for complete details and professional formatting.
+        </div>
+    </div>
+    
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load preview data
+    refreshPreview();
+});
+
+function refreshPreview() {
+    fetch('/api/compliance-stats')
+        .then(response => response.json())
+        .then(data => {
+            // Update preview elements
+            document.getElementById('preview-total-requirements').textContent = data.total || 0;
+            document.getElementById('preview-compliant').textContent = data.compliant || 0;
+            document.getElementById('preview-non-compliant').textContent = data.non_compliant || 0;
+            document.getElementById('preview-total-risks').textContent = data.total_risks || 0;
+            
+            // Calculate compliance percentage
+            const total = data.total || 0;
+            const compliant = data.compliant || 0;
+            const percentage = total > 0 ? Math.round((compliant / total) * 100) : 0;
+            document.getElementById('compliance-progress').style.width = percentage + '%';
+            document.getElementById('compliance-percentage').textContent = percentage + '%';
+            
+            // Update additional preview elements
+            document.getElementById('preview-not-applicable').textContent = data.not_applicable || 0;
+            document.getElementById('preview-not-assessed').textContent = data.not_assessed || 0;
+            
+            // Update header stats
+            document.getElementById('stat-requirements').textContent = data.total || 0;
+            document.getElementById('stat-risks').textContent = data.total_risks || 0;
+            
+            // Fetch evidence and BA counts
+            fetch('/api/evidence-stats')
+                .then(response => response.json())
+                .then(evidenceData => {
+                    document.getElementById('stat-evidence').textContent = evidenceData.total || 0;
+                    document.getElementById('preview-total-evidence').textContent = evidenceData.total || 0;
+                })
+                .catch(error => {
+                    document.getElementById('stat-evidence').textContent = '0';
+                    document.getElementById('preview-total-evidence').textContent = '0';
+                });
+                
+            fetch('/api/ba-stats')
+                .then(response => response.json())
+                .then(baData => {
+                    document.getElementById('preview-total-ba').textContent = baData.total || 0;
+                })
+                .catch(error => {
+                    document.getElementById('preview-total-ba').textContent = '0';
+                });
+        })
+        .catch(error => {
+            console.error('Error loading preview data:', error);
+            // Set default values on error
+            document.getElementById('preview-total-requirements').textContent = '0';
+            document.getElementById('preview-compliant').textContent = '0';
+            document.getElementById('preview-non-compliant').textContent = '0';
+            document.getElementById('preview-total-risks').textContent = '0';
+        });
+}
+
+function exportPreview() {
+    window.print();
+}
+
+
+</script>
+
+<style>
+@media print {
+    .navbar, .btn, .card-header .btn-group {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .text-neon {
+        color: #000080 !important;
+    }
+}
+</style>
+{% endblock %}

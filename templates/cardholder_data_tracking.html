@@ -1,0 +1,707 @@
+{% extends "base.html" %}
+
+{% block title %}Cardholder Data Tracking - ACEP PCI DSS Audit Assistant{% endblock %}
+
+{% block content %}
+<div class="modern-chd">
+<!-- CHD Header -->
+<div class="chd-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="chd-title">Cardholder Data Tracking & Management</h1>
+                <p class="chd-subtitle">Track and manage cardholder data types, classifications, and storage patterns</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addChdModal">
+                    <i class="bi bi-plus-circle"></i>
+                    Add CHD Type
+                </button>
+            </div>
+        </div>
+    </div>
+    
+                <!-- CHD Overview Stats -->
+            <div class="chd-stats">
+        <div class="stat-item">
+            <div class="stat-icon high-risk">
+                <i class="bi bi-shield-exclamation"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-high-risk">0</div>
+                <div class="stat-label">High Risk PHI</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon medium-risk">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-medium-risk">0</div>
+                <div class="stat-label">Medium Risk PHI</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon low-risk">
+                <i class="bi bi-shield"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-low-risk">0</div>
+                <div class="stat-label">Low Risk PHI</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon total-phi">
+                <i class="bi bi-list-ul"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-total-phi">0</div>
+                <div class="stat-label">Total PHI Types</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- PHI Section -->
+    <div class="phi-section">
+        <div class="section-header">
+            <h3 class="section-title">PHI Types & Classifications</h3>
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="phi-search" placeholder="Search PHI types...">
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-risk-level="all">All PHI</button>
+            <button class="filter-btn" data-risk-level="High">High Risk</button>
+            <button class="filter-btn" data-risk-level="Medium">Medium Risk</button>
+            <button class="filter-btn" data-risk-level="Low">Low Risk</button>
+        </div>
+        
+        {% if cardholder_data_types %}
+        <div class="phi-grid" id="phi-grid">
+            {% for phi in cardholder_data_types %}
+            <div class="phi-card" data-risk-level="{{ phi.classification }}" data-title="{{ phi.data_type|lower }}" data-description="{{ phi.description|lower }}">
+                <div class="phi-preview">
+                    <div class="phi-icon">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <div class="phi-classification {{ phi.classification|lower }}">
+                        {{ phi.classification }}
+                    </div>
+                </div>
+                
+                <div class="phi-info">
+                    <h4 class="phi-name" title="{{ phi.data_type }}">
+                        {{ phi.data_type[:50] }}{% if phi.data_type|length > 50 %}...{% endif %}
+                    </h4>
+                    
+                    <div class="phi-details">
+                        {% if phi.description %}
+                        <div class="detail-item">
+                            <span class="detail-label">Description:</span>
+                            <span class="phi-description">{{ phi.description[:80] }}{% if phi.description|length > 80 %}...{% endif %}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Storage:</span>
+                            <span class="storage-info">
+                                {% if phi.storage_location %}
+                                {{ phi.storage_location[:60] }}{% if phi.storage_location|length > 60 %}...{% endif %}
+                                {% else %}
+                                <span class="not-specified">Not specified</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Disposal:</span>
+                            <span class="disposal-info">
+                                {% if phi.disposal_procedures %}
+                                {{ phi.disposal_procedures[:60] }}{% if phi.disposal_procedures|length > 60 %}...{% endif %}
+                                {% else %}
+                                <span class="not-specified">Not specified</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Created:</span>
+                            <span class="created-date">{{ phi.created_at[:10] }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="phi-actions">
+                    <button class="action-btn view-btn" 
+                            data-bs-toggle="modal" data-bs-target="#phiDetailModal{{ phi.id }}" 
+                            title="View Details">
+                        <i class="bi bi-eye"></i>
+                        View
+                    </button>
+                    <button class="action-btn edit-btn" 
+                            data-bs-toggle="modal" data-bs-target="#phiEditModal{{ phi.id }}" 
+                            title="Edit PHI">
+                        <i class="bi bi-pencil"></i>
+                        Edit
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-phi-state">
+            <div class="empty-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h3>No PHI Types Added Yet</h3>
+            <p>Start building your PHI tracking system by adding your first PHI type</p>
+            <div class="empty-actions">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPhiModal">
+                    <i class="bi bi-plus-circle"></i>
+                    Add Your First PHI Type
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+</div>
+
+<!-- PHI Detail Modals -->
+{% for phi in cardholder_data_types %}
+<div class="modal fade" id="phiDetailModal{{ phi.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content phi-detail-modal">
+            <div class="modal-header">
+                <h5 class="modal-title text-dark">
+                    <i class="bi bi-shield-lock me-2"></i>
+                    PHI Type Details: {{ phi.phi_type }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary fw-bold">Basic Information</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td class="text-dark"><strong>PHI Type:</strong></td>
+                                <td class="text-dark">{{ phi.phi_type }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-dark"><strong>Classification:</strong></td>
+                                <td>
+                                    {% if phi.classification == 'High' %}
+                                        <span class="badge bg-danger">{{ phi.classification }}</span>
+                                    {% elif phi.classification == 'Medium' %}
+                                        <span class="badge bg-warning text-dark">{{ phi.classification }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ phi.classification }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-dark"><strong>Created:</strong></td>
+                                <td class="text-dark">{{ phi.created_at }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info fw-bold">Description</h6>
+                        <p class="text-dark">{{ phi.description or 'No description provided' }}</p>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="text-warning fw-bold">Access Patterns</h6>
+                        <p class="text-dark">{{ phi.access_patterns or 'Not specified' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success fw-bold">Disposal Procedures</h6>
+                        <p class="text-dark">{{ phi.disposal_procedures or 'Not specified' }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#phiEditModal{{ phi.id }}" data-bs-dismiss="modal">
+                    <i class="bi bi-pencil me-2"></i>
+                    Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Add PHI Modal -->
+<div class="modal fade" id="addPhiModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_cardholder_data_type') }}" id="phi-form">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle me-2"></i>Add PHI Type
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="data_type" class="form-label">Cardholder Data Type *</label>
+                            <input type="text" class="form-control" id="data_type" name="data_type" required
+                                   placeholder="e.g., Medical Records, Lab Results, Insurance Information">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                      placeholder="Detailed description of this PHI type"></textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="classification" class="form-label">Risk Classification *</label>
+                            <select class="form-select" id="classification" name="classification" required>
+                                <option value="">Select classification...</option>
+                                <option value="High">High Risk</option>
+                                <option value="Medium">Medium Risk</option>
+                                <option value="Low">Low Risk</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="storage_location" class="form-label">Storage Location</label>
+                            <input type="text" class="form-control" id="storage_location" name="storage_location"
+                                   placeholder="Where this data is stored">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="encryption_status" class="form-label">Encryption Status</label>
+                            <input type="text" class="form-control" id="encryption_status" name="encryption_status"
+                                   placeholder="Encryption method used">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="disposal_procedures" class="form-label">Disposal Procedures</label>
+                            <textarea class="form-control" id="disposal_procedures" name="disposal_procedures" rows="3"
+                                      placeholder="How this data should be disposed of securely"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Add PHI Type
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit PHI Modals -->
+{% for phi in cardholder_data_types %}
+<div class="modal fade" id="phiEditModal{{ phi.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('update_cardholder_data_type', data_id=phi.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil me-2"></i>Edit PHI Type
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="edit_phi_type_{{ phi.id }}" class="form-label">PHI Type *</label>
+                            <input type="text" class="form-control" id="edit_data_type_{{ phi.id }}" name="data_type" 
+                                   value="{{ phi.data_type }}" required>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="edit_description_{{ phi.id }}" class="form-label">Description</label>
+                            <textarea class="form-control" id="edit_description_{{ phi.id }}" name="description" rows="3">{{ phi.description or '' }}</textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_classification_{{ phi.id }}" class="form-label">Risk Classification *</label>
+                            <select class="form-select" id="edit_classification_{{ phi.id }}" name="classification" required>
+                                <option value="High" {% if phi.classification == 'High' %}selected{% endif %}>High Risk</option>
+                                <option value="Medium" {% if phi.classification == 'Medium' %}selected{% endif %}>Medium Risk</option>
+                                <option value="Low" {% if phi.classification == 'Low' %}selected{% endif %}>Low Risk</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_storage_location_{{ phi.id }}" class="form-label">Storage Location</label>
+                            <input type="text" class="form-control" id="edit_storage_location_{{ phi.id }}" name="storage_location"
+                                   value="{{ phi.storage_location or '' }}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_encryption_status_{{ phi.id }}" class="form-label">Encryption Status</label>
+                            <input type="text" class="form-control" id="edit_encryption_status_{{ phi.id }}" name="encryption_status"
+                                   value="{{ phi.encryption_status or '' }}">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="edit_disposal_procedures_{{ phi.id }}" class="form-label">Disposal Procedures</label>
+                            <textarea class="form-control" id="edit_disposal_procedures_{{ phi.id }}" name="disposal_procedures" rows="3">{{ phi.disposal_procedures or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Update PHI Type
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDeletePhi({{ phi.id }})">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<style>
+.classification-summary {
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.classification-summary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.summary-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.summary-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.summary-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.high-risk:hover {
+    border-color: rgba(220, 53, 69, 0.5);
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.2);
+}
+
+.medium-risk:hover {
+    border-color: rgba(255, 193, 7, 0.5);
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.2);
+}
+
+.low-risk:hover {
+    border-color: rgba(40, 167, 69, 0.5);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.2);
+}
+
+/* PHI Detail Modal Styling - Enhanced Color Scheme */
+.phi-detail-modal {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%) !important;
+    color: #212529 !important;
+    border-radius: 15px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #e9ecef;
+}
+
+.phi-detail-modal .modal-header {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    border-bottom: 2px solid #495057;
+    border-radius: 15px 15px 0 0 !important;
+    padding: 1.5rem;
+}
+
+.phi-detail-modal .modal-header .modal-title {
+    color: #ffffff !important;
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+.phi-detail-modal .modal-header .btn-close {
+    filter: invert(1);
+    opacity: 0.8;
+}
+
+.phi-detail-modal .modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+.phi-detail-modal .modal-body {
+    background-color: #ffffff;
+    color: #212529 !important;
+    padding: 2rem;
+}
+
+.phi-detail-modal .modal-footer {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-top: 2px solid #dee2e6;
+    border-radius: 0 0 15px 15px !important;
+    padding: 1.5rem;
+}
+
+/* Enhanced Table Styling */
+.phi-detail-modal .table {
+    color: #212529 !important;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.phi-detail-modal .table td,
+.phi-detail-modal .table th {
+    color: #212529 !important;
+    border-color: #dee2e6;
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+.phi-detail-modal .table tr:first-child td {
+    border-top: none;
+}
+
+.phi-detail-modal .table tr:hover {
+    background-color: #e9ecef;
+}
+
+/* Text and Content Styling */
+.phi-detail-modal p {
+    color: #495057 !important;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #6c757d;
+}
+
+.phi-detail-modal .text-dark {
+    color: #212529 !important;
+    font-weight: 500;
+}
+
+/* Enhanced Section Headings with Icons and Colors */
+.phi-detail-modal h6.text-primary {
+    color: #0d6efd !important;
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border-left: 4px solid #0d6efd;
+    margin-bottom: 1rem;
+}
+
+.phi-detail-modal h6.text-info {
+    color: #0dcaf0 !important;
+    background: linear-gradient(135deg, rgba(13, 202, 240, 0.1) 0%, rgba(13, 202, 240, 0.05) 100%);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border-left: 4px solid #0dcaf0;
+    margin-bottom: 1rem;
+}
+
+.phi-detail-modal h6.text-warning {
+    color: #f57c00 !important;
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+    margin-bottom: 1rem;
+}
+
+.phi-detail-modal h6.text-success {
+    color: #198754 !important;
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border-left: 4px solid #198754;
+    margin-bottom: 1rem;
+}
+
+/* Badge Enhancements */
+.phi-detail-modal .badge {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.phi-detail-modal .badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.phi-detail-modal .badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+    color: #212529 !important;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.phi-detail-modal .badge.bg-success {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%) !important;
+    box-shadow: 0 2px 8px rgba(25, 135, 84, 0.3);
+}
+
+/* Button Styling */
+.phi-detail-modal .btn {
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.phi-detail-modal .btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    border: none;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+}
+
+.phi-detail-modal .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+}
+
+.phi-detail-modal .btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    border: none;
+    color: #212529;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.phi-detail-modal .btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+    color: #212529;
+}
+
+/* Row Spacing */
+.phi-detail-modal .row {
+    margin-bottom: 1.5rem;
+}
+
+.phi-detail-modal .row:last-child {
+    margin-bottom: 0;
+}
+</style>
+
+<script>
+// Update PHI stats
+function updatePhiStats() {
+    const cards = document.querySelectorAll('.phi-card');
+    let highRisk = 0, mediumRisk = 0, lowRisk = 0;
+    
+    cards.forEach(card => {
+        const riskLevel = card.dataset.riskLevel;
+        switch(riskLevel) {
+            case 'High':
+                highRisk++;
+                break;
+            case 'Medium':
+                mediumRisk++;
+                break;
+            case 'Low':
+                lowRisk++;
+                break;
+        }
+    });
+    
+    // Update stats
+    document.getElementById('stat-high-risk').textContent = highRisk;
+    document.getElementById('stat-medium-risk').textContent = mediumRisk;
+    document.getElementById('stat-low-risk').textContent = lowRisk;
+    document.getElementById('stat-total-phi').textContent = cards.length;
+}
+
+// Search functionality
+function setupPhiSearch() {
+    const searchInput = document.getElementById('phi-search');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const cards = document.querySelectorAll('.phi-card');
+            
+            cards.forEach(card => {
+                const title = card.dataset.title || '';
+                const description = card.dataset.description || '';
+                
+                if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+}
+
+// Filter functionality
+function setupPhiFilters() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active state
+            filterButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const riskLevel = this.dataset.riskLevel;
+            const cards = document.querySelectorAll('.phi-card');
+            
+            cards.forEach(card => {
+                if (riskLevel === 'all' || card.dataset.riskLevel === riskLevel) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+}
+
+function confirmDeletePhi(phiId) {
+    if (confirm('Are you sure you want to delete this cardholder data type? This action cannot be undone.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/cardholder-data-tracking/delete/${phiId}`;
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    updatePhiStats();
+    setupPhiSearch();
+    setupPhiFilters();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ACEP PCI DSS AUDIT ASSISTANT{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    {% if session.user_id %}
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-logo">
+                    <span>ACEP PCI DSS AUDIT ASSISTANT</span>
+                </a>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-nav-item{% if request.endpoint == 'dashboard' %} active{% endif %}">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('audit_checklist') }}" class="sidebar-nav-item{% if request.endpoint == 'audit_checklist' %} active{% endif %}">
+                    <i class="bi bi-clipboard-check"></i>
+                    <span>Requirements</span>
+                </a>
+                <a href="{{ url_for('evidence') }}" class="sidebar-nav-item{% if request.endpoint == 'evidence' %} active{% endif %}">
+                    <i class="bi bi-file-earmark-plus"></i>
+                    <span>Evidence</span>
+                </a>
+                <a href="{{ url_for('risk_register') }}" class="sidebar-nav-item{% if request.endpoint == 'risk_register' %} active{% endif %}">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Risks</span>
+                </a>
+                <a href="{{ url_for('cardholder_data_tracking') }}" class="sidebar-nav-item{% if request.endpoint == 'cardholder_data_tracking' %} active{% endif %}">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>Cardholder Data</span>
+                </a>
+                <a href="{{ url_for('service_providers') }}" class="sidebar-nav-item{% if request.endpoint == 'service_providers' %} active{% endif %}">
+                    <i class="bi bi-building"></i>
+                    <span>Service Providers</span>
+                </a>
+                <a href="{{ url_for('reports') }}" class="sidebar-nav-item{% if request.endpoint == 'reports' %} active{% endif %}">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Reports</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <header class="topbar">
+                <h1 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                <div class="topbar-actions">
+                    <div class="user-menu">
+                        <div class="user-avatar">{{ session.username[0].upper() }}</div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                {{ session.username }}
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                    <i class="bi bi-box-arrow-right me-2"></i>
+                                    Logout
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                <i class="bi bi-{{ 'exclamation-triangle' if category == 'error' else 'info-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    {% else %}
+    <!-- Login/Public Content -->
+    <div class="public-layout">
+        {% block login_content %}{% endblock %}
+    </div>
+    {% endif %}
+
+    <!-- Enhanced Footer - Created by Chaitanya Eshwar Prasad -->
+    <footer class="text-center py-5 mt-auto" style="background: var(--header-gradient); border-top: 3px solid var(--border-primary); box-shadow: var(--border-shadow);">
+        <div class="container">
+            <div class="footer-content">
+                <h4 style="color: var(--text-primary) !important; margin-bottom: 20px; font-weight: 700; font-size: 1.5rem;">
+                    ACEP PCI DSS AUDIT ASSISTANT
+                </h4>
+                
+                <div class="created-by-section" style="margin-bottom: 25px;">
+                    <h5 style="color: var(--accent-color) !important; margin-bottom: 15px; font-weight: 600; font-size: 1.2rem;">
+                        Created by Chaitanya Eshwar Prasad
+                    </h5>
+                    <p style="color: var(--text-muted) !important; margin-bottom: 0; font-size: 0.95rem;">
+                        Cybersecurity Professional & PCI DSS Compliance Expert
+                    </p>
+                </div>
+                
+                <div class="social-links" style="margin-bottom: 25px;">
+                    <div class="social-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; max-width: 800px; margin: 0 auto;">
+                        <a href="https://chaitanyaeshwarprasad.com" target="_blank" class="social-link" style="display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--accent-color) !important; text-decoration: none; padding: 12px 16px; border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 10px; background: rgba(0, 212, 255, 0.05); transition: all 0.3s ease; font-weight: 500;">
+                            🌐 chaitanyaeshwarprasad.com
+                        </a>
+                        <a href="https://linkedin.com/in/chaitanya-eshwar-prasad" target="_blank" class="social-link" style="display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--accent-color) !important; text-decoration: none; padding: 12px 16px; border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 10px; background: rgba(0, 212, 255, 0.05); transition: all 0.3s ease; font-weight: 500;">
+                            💼 linkedin.com/in/chaitanya-eshwar-prasad
+                        </a>
+                        <a href="https://github.com/chaitanyaeshwarprasad" target="_blank" class="social-link" style="display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-primary) !important; text-decoration: none; padding: 12px 16px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.05); transition: all 0.3s ease; font-weight: 500;">
+                            🐙 github.com/chaitanyaeshwarprasad
+                        </a>
+                        <a href="https://youtube.com/@chaitanya.eshwar.prasad" target="_blank" class="social-link" style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #ff0000 !important; text-decoration: none; padding: 12px 16px; border: 1px solid rgba(255, 0, 0, 0.3); border-radius: 10px; background: rgba(255, 0, 0, 0.05); transition: all 0.3s ease; font-weight: 500;">
+                            🎥 youtube.com/@chaitanya.eshwar.prasad
+                        </a>
+                        <a href="https://instagram.com/acep.tech.in.telugu" target="_blank" class="social-link" style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #ff6b35 !important; text-decoration: none; padding: 12px 16px; border: 1px solid rgba(255, 107, 53, 0.3); border-radius: 10px; background: rgba(255, 107, 53, 0.05); transition: all 0.3s ease; font-weight: 500;">
+                            📸 instagram.com/acep.tech.in.telugu
+                        </a>
+                        <a href="https://yeswehack.com/hunters/chaitanya-eshwar-prasad" target="_blank" class="social-link" style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #00ff00 !important; text-decoration: none; padding: 12px 16px; border: 1px solid rgba(0, 255, 0, 0.3); border-radius: 10px; background: rgba(0, 255, 0, 0.05); transition: all 0.3s ease; font-weight: 500;">
+                            🛡️ yeswehack.com/hunters/chaitanya-eshwar-prasad
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-copyright" style="border-top: 1px solid rgba(0, 212, 255, 0.2); padding-top: 20px;">
+                    <p style="color: var(--text-muted) !important; margin-bottom: 0; font-size: 0.9rem; font-weight: 500;">
+                        &copy; 2024 ACEP PCI DSS AUDIT ASSISTANT. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

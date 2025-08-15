@@ -1,0 +1,585 @@
+{% extends "base.html" %}
+
+{% block title %}Risk Register - ACEP PCI DSS Audit Assistant{% endblock %}
+
+{% block content %}
+<div class="modern-risks">
+    <!-- Risks Header -->
+    <div class="risks-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="risks-title">Risk Register</h1>
+                <p class="risks-subtitle">Information Security Risk Assessment and Management</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRiskModal">
+                    <i class="bi bi-plus-circle"></i>
+                    Add Risk
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Risks Overview Stats -->
+    <div class="risks-stats">
+        <div class="stat-item">
+            <div class="stat-icon high-risk">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-high-risk">{{ risks|selectattr('risk_score', 'ge', 15)|list|length }}</div>
+                <div class="stat-label">High Risk</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon medium-risk">
+                <i class="bi bi-exclamation-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-medium-risk">{{ risks|selectattr('risk_score', 'ge', 8)|selectattr('risk_score', 'lt', 15)|list|length }}</div>
+                <div class="stat-label">Medium Risk</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon low-risk">
+                <i class="bi bi-info-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-low-risk">{{ risks|selectattr('risk_score', 'lt', 8)|list|length }}</div>
+                <div class="stat-label">Low Risk</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon total-risks">
+                <i class="bi bi-list-ul"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-total-risks">{{ risks|length }}</div>
+                <div class="stat-label">Total Risks</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Risks Section -->
+    <div class="risks-section">
+        <div class="section-header">
+            <h3 class="section-title">Risk Assessment</h3>
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="risk-search" placeholder="Search risks...">
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-risk-level="all">All Risks</button>
+            <button class="filter-btn" data-risk-level="high">High Risk</button>
+            <button class="filter-btn" data-risk-level="medium">Medium Risk</button>
+            <button class="filter-btn" data-risk-level="low">Low Risk</button>
+        </div>
+    
+        {% if risks %}
+        <div class="risks-grid" id="risks-grid">
+            {% for risk in risks %}
+            <div class="risk-card" data-risk-level="{% if risk.risk_score >= 15 %}high{% elif risk.risk_score >= 8 %}medium{% else %}low{% endif %}" data-title="{{ risk.title|lower }}" data-owner="{{ risk.owner|lower }}">
+                <div class="risk-preview">
+                    <div class="risk-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="risk-score {% if risk.risk_score >= 15 %}high{% elif risk.risk_score >= 8 %}medium{% else %}low{% endif %}">
+                        {{ risk.risk_score }}
+                    </div>
+                </div>
+                
+                <div class="risk-info">
+                    <h4 class="risk-name" title="{{ risk.title }}">
+                        {{ risk.title[:50] }}{% if risk.title|length > 50 %}...{% endif %}
+                    </h4>
+                    
+                    <div class="risk-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Likelihood:</span>
+                            <span class="likelihood-badge">{{ risk.likelihood }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Impact:</span>
+                            <span class="impact-badge">{{ risk.impact }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Status:</span>
+                            <span class="status-badge 
+                                {% if risk.status == 'Closed' %}closed
+                                {% elif risk.status == 'In Progress' %}in-progress
+                                {% else %}open{% endif %}">
+                                {{ risk.status }}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Owner:</span>
+                            <span class="owner-info">
+                                {% if risk.owner %}
+                                <i class="bi bi-person-circle"></i>{{ risk.owner }}
+                                {% else %}
+                                <span class="unassigned">Unassigned</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        {% if risk.description %}
+                        <div class="detail-item">
+                            <span class="detail-label">Description:</span>
+                            <span class="risk-description">{{ risk.description[:80] }}{% if risk.description|length > 80 %}...{% endif %}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="risk-actions">
+                    <button class="action-btn edit-btn" 
+                            onclick="editRisk({{ risk.id }}, `{{ risk.title|replace('`', '\\`')|replace('\n', '\\n') }}`, `{{ risk.description|replace('`', '\\`')|replace('\n', '\\n') if risk.description else '' }}`, {{ risk.likelihood }}, {{ risk.impact }}, `{{ risk.mitigation|replace('`', '\\`')|replace('\n', '\\n') if risk.mitigation else '' }}`, `{{ risk.owner|replace('`', '\\`')|replace('\n', '\\n') if risk.owner else '' }}`, '{{ risk.status }}')" 
+                            title="Edit Risk" data-bs-toggle="modal" data-bs-target="#editRiskModal">
+                        <i class="bi bi-pencil"></i>
+                        Edit
+                    </button>
+                    <button class="action-btn view-btn" 
+                            onclick="viewRisk(`{{ risk.title|replace('`', '\\`')|replace('\n', '\\n') }}`, `{{ risk.description|replace('`', '\\`')|replace('\n', '\\n') if risk.description else '' }}`, {{ risk.likelihood }}, {{ risk.impact }}, {{ risk.risk_score }}, `{{ risk.mitigation|replace('`', '\\`')|replace('\n', '\\n') if risk.mitigation else '' }}`, `{{ risk.owner|replace('`', '\\`')|replace('\n', '\\n') if risk.owner else '' }}`, '{{ risk.status }}', '{{ risk.created_at }}')" 
+                            title="View Details" data-bs-toggle="modal" data-bs-target="#viewRiskModal">
+                        <i class="bi bi-eye"></i>
+                        View
+                    </button>
+                    <button class="action-btn delete-btn" 
+                            onclick="confirmDeleteRisk({{ risk.id }})" 
+                            title="Delete Risk">
+                        <i class="bi bi-trash"></i>
+                        Delete
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-risks-state">
+            <div class="empty-icon">
+                <i class="bi bi-shield-exclamation"></i>
+            </div>
+            <h3>No Risks Identified</h3>
+            <p>Start building your risk register by adding the first risk assessment</p>
+            <div class="empty-actions">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRiskModal">
+                    <i class="bi bi-plus-circle"></i>
+                    Add Your First Risk
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Risk Modal -->
+<div class="modal fade" id="addRiskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <form method="POST" action="{{ url_for('add_risk') }}" id="risk-form">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-neon">
+                        <i class="bi bi-plus-circle me-2"></i>Add New Risk
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="title" class="form-label">Risk Title *</label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                   placeholder="Brief description of the risk">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="description" class="form-label">Risk Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                      placeholder="Detailed description of the risk and potential impact"></textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="likelihood" class="form-label">Likelihood *</label>
+                            <select class="form-select" id="likelihood" name="likelihood" required>
+                                <option value="">Select likelihood...</option>
+                                <option value="1">1 - Very Low</option>
+                                <option value="2">2 - Low</option>
+                                <option value="3">3 - Medium</option>
+                                <option value="4">4 - High</option>
+                                <option value="5">5 - Very High</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="impact" class="form-label">Impact *</label>
+                            <select class="form-select" id="impact" name="impact" required>
+                                <option value="">Select impact...</option>
+                                <option value="1">1 - Very Low</option>
+                                <option value="2">2 - Low</option>
+                                <option value="3">3 - Medium</option>
+                                <option value="4">4 - High</option>
+                                <option value="5">5 - Very High</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="owner" class="form-label">Risk Owner</label>
+                            <input type="text" class="form-control" id="owner" name="owner"
+                                   placeholder="Who is responsible for this risk?">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Risk Score</label>
+                            <div class="form-control-plaintext">
+                                <span id="risk-score" class="badge bg-secondary">0</span>
+                                <small class="text-muted ms-2">(Likelihood × Impact)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="mitigation" class="form-label">Mitigation Strategy</label>
+                            <textarea class="form-control" id="mitigation" name="mitigation" rows="3"
+                                      placeholder="How will this risk be mitigated or managed?"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Add Risk
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Risk Modal -->
+<div class="modal fade" id="editRiskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <form method="POST" id="edit-risk-form">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-neon">
+                        <i class="bi bi-pencil me-2"></i>Edit Risk
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Same fields as add modal but with edit- prefixed IDs -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="edit-title" class="form-label">Risk Title *</label>
+                            <input type="text" class="form-control" id="edit-title" name="title" required>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="edit-description" class="form-label">Risk Description</label>
+                            <textarea class="form-control" id="edit-description" name="description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-likelihood" class="form-label">Likelihood *</label>
+                            <select class="form-select" id="edit-likelihood" name="likelihood" required>
+                                <option value="1">1 - Very Low</option>
+                                <option value="2">2 - Low</option>
+                                <option value="3">3 - Medium</option>
+                                <option value="4">4 - High</option>
+                                <option value="5">5 - Very High</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-impact" class="form-label">Impact *</label>
+                            <select class="form-select" id="edit-impact" name="impact" required>
+                                <option value="1">1 - Very Low</option>
+                                <option value="2">2 - Low</option>
+                                <option value="3">3 - Medium</option>
+                                <option value="4">4 - High</option>
+                                <option value="5">5 - Very High</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="edit-owner" class="form-label">Risk Owner</label>
+                            <input type="text" class="form-control" id="edit-owner" name="owner">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="edit-status" class="form-label">Status</label>
+                            <select class="form-select" id="edit-status" name="status">
+                                <option value="Open">Open</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Closed">Closed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Risk Score</label>
+                            <div class="form-control-plaintext">
+                                <span id="edit-risk-score" class="badge bg-secondary">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="edit-mitigation" class="form-label">Mitigation Strategy</label>
+                            <textarea class="form-control" id="edit-mitigation" name="mitigation" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Update Risk
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Risk Modal -->
+<div class="modal fade" id="viewRiskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-neon">
+                    <i class="bi bi-eye me-2"></i>Risk Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="view-risk-content">
+                    <!-- Content populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update risks stats
+function updateRisksStats() {
+    const cards = document.querySelectorAll('.risk-card');
+    let highRisk = 0, mediumRisk = 0, lowRisk = 0;
+    
+    cards.forEach(card => {
+        const riskLevel = card.dataset.riskLevel;
+        switch(riskLevel) {
+            case 'high':
+                highRisk++;
+                break;
+            case 'medium':
+                mediumRisk++;
+                break;
+            case 'low':
+                lowRisk++;
+                break;
+        }
+    });
+    
+    // Update stats
+    document.getElementById('stat-high-risk').textContent = highRisk;
+    document.getElementById('stat-medium-risk').textContent = mediumRisk;
+    document.getElementById('stat-low-risk').textContent = lowRisk;
+    document.getElementById('stat-total-risks').textContent = cards.length;
+}
+
+// Search functionality
+function setupSearch() {
+    const searchInput = document.getElementById('risk-search');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const cards = document.querySelectorAll('.risk-card');
+            
+            cards.forEach(card => {
+                const title = card.dataset.title || '';
+                const owner = card.dataset.owner || '';
+                
+                if (title.includes(searchTerm) || owner.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+}
+
+// Filter functionality
+function setupFilters() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active state
+            filterButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const riskLevel = this.dataset.riskLevel;
+            const cards = document.querySelectorAll('.risk-card');
+            
+            cards.forEach(card => {
+                if (riskLevel === 'all' || card.dataset.riskLevel === riskLevel) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+}
+
+// Risk score calculation
+document.getElementById('likelihood').addEventListener('change', calculateRiskScore);
+document.getElementById('impact').addEventListener('change', calculateRiskScore);
+
+function calculateRiskScore() {
+    const likelihood = parseInt(document.getElementById('likelihood').value) || 0;
+    const impact = parseInt(document.getElementById('impact').value) || 0;
+    const score = likelihood * impact;
+    
+    const scoreElement = document.getElementById('risk-score');
+    scoreElement.textContent = score;
+    
+    // Update score badge color
+    scoreElement.className = 'badge';
+    if (score >= 15) {
+        scoreElement.classList.add('bg-danger');
+    } else if (score >= 8) {
+        scoreElement.classList.add('bg-warning');
+    } else {
+        scoreElement.classList.add('bg-success');
+    }
+}
+
+function editRisk(id, title, description, likelihood, impact, mitigation, owner, status) {
+    document.getElementById('edit-risk-form').action = `/risks/update/${id}`;
+    document.getElementById('edit-title').value = title;
+    document.getElementById('edit-description').value = description;
+    document.getElementById('edit-likelihood').value = likelihood;
+    document.getElementById('edit-impact').value = impact;
+    document.getElementById('edit-mitigation').value = mitigation;
+    document.getElementById('edit-owner').value = owner;
+    document.getElementById('edit-status').value = status;
+    
+    // Update risk score
+    const score = likelihood * impact;
+    const scoreElement = document.getElementById('edit-risk-score');
+    scoreElement.textContent = score;
+    scoreElement.className = `badge ${getRiskClass(score)}`;
+    
+    // Setup event listeners for edit form score calculation
+    document.getElementById('edit-likelihood').addEventListener('change', calculateEditRiskScore);
+    document.getElementById('edit-impact').addEventListener('change', calculateEditRiskScore);
+}
+
+function viewRisk(title, description, likelihood, impact, score, mitigation, owner, status, created) {
+    const content = `
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <strong>Title:</strong>
+                <p class="text-muted">${title}</p>
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong>Status:</strong>
+                <span class="badge ${status === 'Closed' ? 'bg-success' : status === 'In Progress' ? 'bg-warning' : 'bg-danger'}">${status}</span>
+            </div>
+            <div class="col-md-12 mb-3">
+                <strong>Description:</strong>
+                <p class="text-muted">${description || 'No description provided'}</p>
+            </div>
+            <div class="col-md-3 mb-3">
+                <strong>Likelihood:</strong>
+                <span class="badge bg-secondary">${likelihood}</span>
+            </div>
+            <div class="col-md-3 mb-3">
+                <strong>Impact:</strong>
+                <span class="badge bg-secondary">${impact}</span>
+            </div>
+            <div class="col-md-3 mb-3">
+                <span class="badge ${getRiskClass(score)}">${score}</span>
+            </div>
+            <div class="col-md-3 mb-3">
+                <strong>Owner:</strong>
+                <p class="text-muted">${owner || 'Unassigned'}</p>
+            </div>
+            <div class="col-md-12 mb-3">
+                <strong>Mitigation Strategy:</strong>
+                <p class="text-muted">${mitigation || 'No mitigation strategy defined'}</p>
+            </div>
+            <div class="col-md-12">
+                <strong>Created:</strong>
+                <small class="text-muted">${created}</small>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('view-risk-content').innerHTML = content;
+}
+
+function calculateEditRiskScore() {
+    const likelihood = parseInt(document.getElementById('edit-likelihood').value) || 0;
+    const impact = parseInt(document.getElementById('edit-impact').value) || 0;
+    const score = likelihood * impact;
+    
+    const scoreElement = document.getElementById('edit-risk-score');
+    scoreElement.textContent = score;
+    scoreElement.className = `badge ${getRiskClass(score)}`;
+}
+
+function getRiskClass(score) {
+    if (score >= 15) {
+        return 'bg-danger';
+    } else if (score >= 8) {
+        return 'bg-warning';
+    } else {
+        return 'bg-success';
+    }
+}
+
+function confirmDeleteRisk(riskId) {
+    if (confirm('Are you sure you want to delete this risk? This action cannot be undone.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/risks/delete/${riskId}`;
+        
+        // Add CSRF token if available
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = 'csrf_token';
+            tokenInput.value = csrfToken.getAttribute('content');
+            form.appendChild(tokenInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    updateRisksStats();
+    setupSearch();
+    setupFilters();
+});
+</script>
+{% endblock %}

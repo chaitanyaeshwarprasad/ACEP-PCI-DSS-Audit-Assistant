@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACEP PCI DSS Compliance Report - {{ generated_at.strftime('%d/%m/%Y') }}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            color: #333333;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+        
+        .company-logo {
+            font-size: 2rem;
+            color: #00bfff;
+            font-weight: bold;
+        }
+        
+        .section-header {
+            background: #f8f9fa;
+            border-left: 4px solid #00bfff;
+            padding: 1rem;
+            margin: 2rem 0 1rem 0;
+        }
+        
+        .stat-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00bfff;
+        }
+        
+        .compliance-bar {
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .compliance-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .risk-high { background-color: #dc3545; color: white; }
+        .risk-medium { background-color: #ffc107; color: black; }
+        .risk-low { background-color: #28a745; color: white; }
+        
+        .control-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .status-compliant { background-color: #d4edda; color: #155724; }
+        .status-non-compliant { background-color: #f8d7da; color: #721c24; }
+        .status-not-applicable { background-color: #d1ecf1; color: #0c5460; }
+        .status-not-assessed { background-color: #fff3cd; color: #856404; }
+        
+        @media print {
+            .no-print { display: none !important; }
+            .page-break { page-break-before: always; }
+            body { font-size: 12px; }
+            .stat-number { font-size: 1.5rem; }
+        }
+        
+        .footer {
+            border-top: 2px solid #00bfff;
+            margin-top: 3rem;
+            padding-top: 1rem;
+            text-align: center;
+            color: #6c757d;
+        }
+        
+        /* Export buttons styling */
+        .export-buttons .btn {
+            margin-bottom: 5px;
+            min-width: 80px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+        
+        .export-buttons .btn:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .export-feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            display: none;
+            z-index: 1001;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .export-feedback.success {
+            background-color: #28a745;
+        }
+        
+        .export-feedback.error {
+            background-color: #dc3545;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                                    <div class="company-logo mb-2">
+                    <i class="bi bi-shield-check me-2"></i>{{ report_type if report_type else 'ACEP PCI DSS Compliance Report' }}
+                </div>
+                    <h2 class="h4 mb-0">
+                        {% if report_type and 'Evidence' in report_type %}
+                            Evidence Documentation & Management
+                        {% elif report_type and 'Risk' in report_type %}
+                            Risk Assessment & Management
+                        {% else %}
+                            Information Security Management System Assessment
+                        {% endif %}
+                    </h2>
+                    <p class="mb-0 opacity-75">
+                        {% if report_type and 'Evidence' in report_type %}
+                            PCI DSS Evidence Documentation
+                        {% elif report_type and 'Risk' in report_type %}
+                            PCI DSS Risk Assessment
+                        {% else %}
+                            PCI DSS Compliance Assessment
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="bg-white bg-opacity-10 p-3 rounded">
+                        <div><strong>Generated:</strong> {{ generated_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                        <div><strong>By:</strong> {{ generated_by }}</div>
+                        <div><strong>Version:</strong> 1.0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Executive Summary -->
+    <div class="container my-4">
+        <div class="section-header">
+            <h3 class="mb-0"><i class="bi bi-graph-up me-2"></i>Executive Summary</h3>
+        </div>
+        
+        <div class="row">
+            {% if report_type and 'Evidence' in report_type %}
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ evidence_count }}</div>
+                        <div class="text-muted">Total Evidence Files</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-number text-info">{{ today_uploads }}</div>
+                        <div class="text-muted">Today's Uploads</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-number text-success">{{ evidence|length }}</div>
+                        <div class="text-muted">Active Evidence</div>
+                    </div>
+                </div>
+            {% elif report_type and 'Risk' in report_type %}
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ risks|length }}</div>
+                        <div class="text-muted">Total Risks</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number text-danger">{{ high_risks }}</div>
+                        <div class="text-muted">High Risks</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number text-warning">{{ medium_risks }}</div>
+                        <div class="text-muted">Medium Risks</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number text-success">{{ low_risks }}</div>
+                        <div class="text-muted">Low Risks</div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_requirements }}</div>
+                        <div class="text-muted">Total Requirements</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number text-success">{{ compliant_requirements }}</div>
+                        <div class="text-muted">Compliant</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number text-danger">{{ non_compliant_requirements }}</div>
+                        <div class="text-muted">Non-Compliant</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ compliance_percentage }}%</div>
+                        <div class="text-muted">Compliance Rate</div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Compliance Progress (Only for Compliance Reports) -->
+        {% if not report_type or 'Compliance' in report_type %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5>Overall Compliance Status</h5>
+                <div class="compliance-bar">
+                    <div class="compliance-fill" style="width: {{ compliance_percentage }}%;">
+                        {{ compliance_percentage }}% Compliant
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-3 text-center">
+                        <span class="badge bg-success px-3 py-2">{{ compliant_requirements }} Compliant</span>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <span class="badge bg-danger px-3 py-2">{{ non_compliant_requirements }} Non-Compliant</span>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <span class="badge bg-info px-3 py-2">{{ not_applicable_requirements }} Not Applicable</span>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <span class="badge bg-warning px-3 py-2">{{ not_assessed_requirements }} Not Assessed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Control Assessment Details -->
+    <div class="container my-4 page-break">
+        <!-- Requirements Assessment (Only for Compliance Reports) -->
+        {% if (not report_type or 'Compliance' in report_type) and requirements %}
+        <div class="section-header">
+            <h3 class="mb-0"><i class="bi bi-list-check me-2"></i>Control Assessment Details</h3>
+        </div>
+        
+        {% set requirement_categories = requirements|groupby('category') %}
+        {% for category, category_requirements in requirement_categories %}
+        <div class="mb-4">
+            <h4 class="text-primary">{{ category }}</h4>
+            <div class="table-responsive">
+                <table class="table table-striped control-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">Requirement ID</th>
+                            <th>Title</th>
+                            <th style="width: 120px;">Status</th>
+                            <th>Notes</th>
+                            <th style="width: 120px;">Assessed By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for requirement in category_requirements %}
+                        <tr class="{% if requirement.status == 'Compliant' %}status-compliant
+                                   {% elif requirement.status == 'Not Compliant' %}status-non-compliant
+                                   {% elif requirement.status == 'Not Applicable' %}status-not-applicable
+                                   {% else %}status-not-assessed{% endif %}">
+                            <td><strong>{{ requirement.requirement_id }}</strong></td>
+                            <td>{{ requirement.title }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if requirement.status == 'Compliant' %}bg-success
+                                    {% elif requirement.status == 'Not Compliant' %}bg-danger
+                                    {% elif requirement.status == 'Not Applicable' %}bg-info
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ requirement.status }}
+                                </span>
+                            </td>
+                            <td>{{ requirement.notes or '-' }}</td>
+                            <td>{{ requirement.assessed_by or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+    
+    <!-- Risk Assessment (Only for Risk Reports or Compliance Reports with Risks) -->
+    {% if risks and (not report_type or 'Risk' in report_type or 'Compliance' in report_type) %}
+    <div class="container my-4 page-break">
+        <div class="section-header">
+            <h3 class="mb-0"><i class="bi bi-shield-exclamation me-2"></i>Risk Assessment</h3>
+        </div>
+        
+        <!-- Risk Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-number text-danger">{{ risks|selectattr('risk_score', 'ge', 15)|list|length }}</div>
+                    <div class="text-muted">High Risk (≥15)</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-number text-warning">{{ risks|selectattr('risk_score', 'ge', 8)|selectattr('risk_score', 'lt', 15)|list|length }}</div>
+                    <div class="text-muted">Medium Risk (8-14)</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-number text-success">{{ risks|selectattr('risk_score', 'lt', 8)|list|length }}</div>
+                    <div class="text-muted">Low Risk (<8)</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Risk Register -->
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Risk</th>
+                        <th style="width: 80px;">Likelihood</th>
+                        <th style="width: 80px;">Impact</th>
+                        <th style="width: 80px;">Score</th>
+                        <th>Mitigation</th>
+                        <th style="width: 120px;">Owner</th>
+                        <th style="width: 100px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for risk in risks %}
+                    <tr>
+                        <td>
+                            <strong>{{ risk.title }}</strong>
+                            {% if risk.description %}
+                            <br><small class="text-muted">{{ risk.description }}</small>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">{{ risk.likelihood }}</td>
+                        <td class="text-center">{{ risk.impact }}</td>
+                        <td class="text-center">
+                            <span class="badge {% if risk.risk_score >= 15 %}risk-high{% elif risk.risk_score >= 8 %}risk-medium{% else %}risk-low{% endif %}">
+                                {{ risk.risk_score }}
+                            </span>
+                        </td>
+                        <td>{{ risk.mitigation or '-' }}</td>
+                        <td>{{ risk.owner or 'Unassigned' }}</td>
+                        <td>
+                            <span class="badge {% if risk.status == 'Closed' %}bg-success{% elif risk.status == 'In Progress' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ risk.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Evidence Details (Only for Evidence Reports or Compliance Reports with Evidence) -->
+    {% if evidence and (not report_type or 'Evidence' in report_type or 'Compliance' in report_type) %}
+    <div class="container my-4 page-break">
+        <div class="section-header">
+            <h3 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Evidence Documentation</h3>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Requirement</th>
+                        <th>Upload Date</th>
+                        <th>File Type</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in evidence %}
+                    <tr>
+                        <td><strong>{{ item.filename }}</strong></td>
+                        <td>{{ item.requirement_title or 'Not Linked' }}</td>
+                        <td>{{ item.uploaded_at.strftime('%d/%m/%Y') if item.uploaded_at else 'N/A' }}</td>
+                        <td>{{ item.file_type or 'Unknown' }}</td>
+                        <td>{{ item.notes or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Evidence Summary -->
+    <div class="container my-4 page-break">
+        <div class="section-header">
+            <h3 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Evidence Summary</h3>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number">{{ evidence_count }}</div>
+                    <div class="text-muted">Evidence Files</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number">{{ evidence|length if evidence else 0 }}</div>
+                    <div class="text-muted">Total Evidence</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Evidence Management:</strong> {{ evidence_count }} evidence files have been uploaded and linked to specific controls. 
+            Evidence files are stored securely and can be accessed through the audit system for review and compliance verification.
+        </div>
+    </div>
+    
+    <!-- Recommendations -->
+    <div class="container my-4">
+        <div class="section-header">
+            <h3 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Recommendations</h3>
+        </div>
+        
+        {% if report_type and 'Evidence' in report_type %}
+        <div class="alert alert-info">
+            <h5><i class="bi bi-file-earmark-text me-2"></i>Evidence Management Recommendations</h5>
+            <ol>
+                <li>Ensure all evidence files are properly linked to PCI DSS requirements</li>
+                <li>Maintain regular backup of evidence repository</li>
+                <li>Review and update evidence files quarterly</li>
+                <li>Implement evidence retention policies</li>
+                <li>Train staff on proper evidence documentation procedures</li>
+            </ol>
+        </div>
+        {% elif report_type and 'Risk' in report_type %}
+        <div class="alert alert-warning">
+            <h5><i class="bi bi-shield-exclamation me-2"></i>Risk Management Recommendations</h5>
+            <ol>
+                <li>Prioritize high-risk items for immediate mitigation</li>
+                <li>Develop comprehensive risk mitigation strategies</li>
+                <li>Assign risk owners and establish timelines</li>
+                <li>Implement regular risk review cycles</li>
+                <li>Monitor risk trends and update assessments quarterly</li>
+            </ol>
+        </div>
+        {% else %}
+        {% if non_compliant_requirements > 0 %}
+        <div class="alert alert-warning">
+            <h5><i class="bi bi-exclamation-triangle me-2"></i>Priority Actions Required</h5>
+            <p>{{ non_compliant_requirements }} requirement(s) are currently non-compliant and require immediate attention:</p>
+            <ul>
+                {% for requirement in requirements if requirement.status == 'Not Compliant' %}
+                <li><strong>{{ requirement.requirement_id }}</strong>: {{ requirement.title }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if not_assessed_requirements > 0 %}
+        <div class="alert alert-info">
+            <h5><i class="bi bi-clock me-2"></i>Pending Assessments</h5>
+            <p>{{ not_assessed_requirements }} requirement(s) have not been assessed yet. Complete the assessment process to achieve full audit coverage.</p>
+        </div>
+        {% endif %}
+        
+        <div class="alert alert-success">
+            <h5><i class="bi bi-check-circle me-2"></i>Next Steps</h5>
+            <ol>
+                <li>Address all non-compliant controls with appropriate corrective actions</li>
+                <li>Complete assessment of remaining controls</li>
+                <li>Implement risk mitigation strategies for high-risk items</li>
+                <li>Schedule regular review and update cycles</li>
+                <li>Maintain evidence repository and documentation</li>
+            </ol>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Footer -->
+    <div class="container">
+        <div class="footer">
+                            <p class="mb-1"><strong>ACEP PCI DSS AUDIT ASSISTANT</strong> - Created by Chaitanya Eshwar Prasad</p>
+            <p class="mb-0">
+                Report generated on {{ generated_at.strftime('%d/%m/%Y at %H:%M') }} by {{ generated_by }}
+                <br>
+                <small>This report contains confidential information and should be handled according to your organization's information classification policy.</small>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Export Feedback -->
+    <div id="exportFeedback" class="export-feedback"></div>
+    
+    <!-- Export Options -->
+    <div class="no-print position-fixed bottom-0 end-0 m-3">
+        <div class="btn-group-vertical shadow export-buttons">
+            <button class="btn btn-primary" onclick="window.print()" title="Print Report">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+            <button class="btn btn-danger" onclick="exportToHTML()" title="Export as HTML">
+                <i class="bi bi-file-earmark-code me-1"></i>HTML
+            </button>
+            <button class="btn btn-success" onclick="exportToCSV()" title="Export as CSV">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV
+            </button>
+            <button class="btn btn-warning" onclick="exportToJSON()" title="Export as JSON">
+                <i class="bi bi-file-earmark-text me-1"></i>JSON
+            </button>
+            <button class="btn btn-info" onclick="copyToClipboard()" title="Copy Report URL">
+                <i class="bi bi-clipboard me-1"></i>Copy Link
+            </button>
+        </div>
+    </div>
+    
+    <!-- Report Data for Export -->
+    <script id="reportData" type="application/json">
+    {
+        "report_info": {
+            "title": "PCI DSS Compliance Report",
+            "generated_at": "{{ generated_at.strftime('%Y-%m-%d %H:%M:%S') if generated_at else 'N/A' }}",
+            "generated_by": "{{ generated_by if generated_by else 'N/A' }}",
+            "report_type": "{{ report_type if report_type else 'Compliance Report' }}"
+        },
+        "compliance_summary": {
+            "total_requirements": {{ total_requirements if total_requirements else 0 }},
+            "compliant_requirements": {{ compliant_requirements if compliant_requirements else 0 }},
+            "non_compliant_requirements": {{ non_compliant_requirements if non_compliant_requirements else 0 }},
+            "not_applicable_requirements": {{ not_applicable_requirements if not_applicable_requirements else 0 }},
+            "not_assessed_requirements": {{ not_assessed_requirements if not_assessed_requirements else 0 }},
+            "compliance_percentage": {{ compliance_percentage if compliance_percentage else 0 }}
+        },
+        "risk_summary": {
+            "high_risks": {{ high_risks if high_risks else 0 }},
+            "medium_risks": {{ medium_risks if medium_risks else 0 }},
+            "low_risks": {{ low_risks if low_risks else 0 }}
+        },
+        "evidence_summary": {
+            "total_evidence_files": {{ evidence_count if evidence_count else 0 }}
+        },
+        "requirements": [
+            {% if requirements %}
+                {% for req in requirements %}
+                {
+                    "requirement_id": "{{ req.requirement_id if req.requirement_id else 'N/A' }}",
+                    "title": "{{ req.title|replace('"', '\\"') if req.title else 'N/A' }}",
+                    "description": "{{ req.description|replace('"', '\\"')|replace('\\n', '\\\\n') if req.description else 'N/A' }}",
+                    "category": "{{ req.category if req.category else 'N/A' }}",
+                    "status": "{{ req.status if req.status else 'N/A' }}",
+                    "assessed_by": "{{ req.assessed_by or '' }}",
+                    "assessed_at": "{{ req.assessed_at or '' }}",
+                    "notes": "{{ req.notes|replace('"', '\\"')|replace('\\n', '\\\\n') if req.notes else '' }}"
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            {% endif %}
+        ],
+        "risks": [
+            {% if risks %}
+                {% for risk in risks %}
+                {
+                    "id": {{ risk.id if risk.id else 0 }},
+                    "title": "{{ risk.title|replace('"', '\\"') if risk.title else 'N/A' }}",
+                    "description": "{{ risk.description|replace('"', '\\"')|replace('\\n', '\\\\n') if risk.description else '' }}",
+                    "likelihood": {{ risk.likelihood if risk.likelihood else 0 }},
+                    "impact": {{ risk.impact if risk.impact else 0 }},
+                    "risk_score": {{ risk.risk_score if risk.risk_score else 0 }},
+                    "mitigation": "{{ risk.mitigation|replace('"', '\\"')|replace('\\n', '\\\\n') if risk.mitigation else '' }}",
+                    "owner": "{{ risk.owner or '' }}",
+                    "status": "{{ risk.status or '' }}",
+                    "created_by": "{{ risk.created_by or '' }}",
+                    "created_at": "{{ risk.created_at or '' }}"
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            {% endif %}
+        ],
+        "evidence": [
+            {% if evidence %}
+                {% for ev in evidence %}
+                {
+                    "id": {{ ev.id if ev.id else 0 }},
+                    "requirement_id": "{{ ev.requirement_id if ev.requirement_id else 'N/A' }}",
+                    "filename": "{{ ev.filename if ev.filename else 'N/A' }}",
+                    "original_filename": "{{ ev.original_filename if ev.original_filename else 'N/A' }}",
+                    "file_size": {{ ev.file_size or 0 }},
+                    "description": "{{ ev.description|replace('"', '\\"')|replace('\\n', '\\\\n') if ev.description else '' }}",
+                    "uploaded_by": "{{ ev.uploaded_by or '' }}",
+                    "uploaded_at": "{{ ev.uploaded_at or '' }}"
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            {% endif %}
+        ]
+    }
+    </script>
+    
+    <!-- Export Scripts -->
+    <script>
+        function showFeedback(message, isSuccess = true) {
+            const feedback = document.getElementById('exportFeedback');
+            feedback.textContent = message;
+            feedback.className = `export-feedback ${isSuccess ? 'success' : 'error'}`;
+            feedback.style.display = 'block';
+            
+            setTimeout(() => {
+                feedback.style.display = 'none';
+            }, 3000);
+        }
+        
+        function exportToHTML() {
+            try {
+                // Clone the entire document
+                const htmlContent = document.documentElement.outerHTML;
+                
+                // Remove the no-print elements from the cloned content
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlContent;
+                const noPrintElements = tempDiv.querySelectorAll('.no-print');
+                noPrintElements.forEach(el => el.remove());
+                
+                // Create clean HTML content
+                const cleanHtml = '<!DOCTYPE html>' + tempDiv.innerHTML;
+                
+                // Create and download file
+                const blob = new Blob([cleanHtml], { type: 'text/html;charset=utf-8' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                link.download = "pci_dss_compliance_report_" + timestamp + ".html";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                
+                showFeedback('HTML report downloaded successfully!');
+            } catch (error) {
+                showFeedback('Failed to export HTML report', false);
+                console.error('HTML export error:', error);
+            }
+        }
+        
+        function exportToCSV() {
+            try {
+                console.log('CSV export started');
+                
+                // Get report data from the JSON script tag
+                const reportDataElement = document.getElementById('reportData');
+                if (!reportDataElement) {
+                    console.error('Report data element not found');
+                    showFeedback('Report data not found. Please refresh and try again.', false);
+                    return;
+                }
+                
+                console.log('Report data element found');
+                
+                let reportData;
+                try {
+                    reportData = JSON.parse(reportDataElement.textContent);
+                    console.log('Report data parsed successfully:', reportData);
+                } catch (parseError) {
+                    console.error('Failed to parse report data:', parseError);
+                    showFeedback('Invalid report data. Please refresh and try again.', false);
+                    return;
+                }
+                
+                // Create CSV content
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += "PCI DSS Compliance Report\\n\\n";
+                
+                // Add basic report info
+                csvContent += "Generated: " + (reportData.report_info?.generated_at || 'N/A') + "\\n";
+                csvContent += "Generated By: " + (reportData.report_info?.generated_by || 'N/A') + "\\n\\n";
+                
+                // Add summary statistics
+                csvContent += "Summary Statistics\\n";
+                const summary = reportData.compliance_summary || {};
+                csvContent += "Total Requirements," + (summary.total_requirements || 0) + "\\n";
+                csvContent += "Compliant Requirements," + (summary.compliant_requirements || 0) + "\\n";
+                csvContent += "Non-Compliant Requirements," + (summary.non_compliant_requirements || 0) + "\\n";
+                csvContent += "Not Applicable Requirements," + (summary.not_applicable_requirements || 0) + "\\n";
+                csvContent += "Not Assessed Requirements," + (summary.not_assessed_requirements || 0) + "\\n";
+                csvContent += "Compliance Percentage," + (summary.compliance_percentage || 0) + "%\\n\\n";
+                
+                // Add requirements details
+                csvContent += "Requirement ID,Title,Status,Category,Description\\n";
+                if (reportData.requirements && Array.isArray(reportData.requirements) && reportData.requirements.length > 0) {
+                    console.log('Adding ' + reportData.requirements.length + ' requirements to CSV');
+                    reportData.requirements.forEach(function(req) {
+                        const reqId = (req.requirement_id || 'N/A').toString().replace(/"/g, '""');
+                        const reqTitle = (req.title || 'N/A').toString().replace(/"/g, '""').replace(/,/g, ';');
+                        const reqStatus = (req.status || 'N/A').toString().replace(/"/g, '""');
+                        const reqCategory = (req.category || 'N/A').toString().replace(/"/g, '""');
+                        const reqDesc = (req.description || 'N/A').toString().replace(/"/g, '""').replace(/\\n/g, ' ').replace(/,/g, ';');
+                        csvContent += '"' + reqId + '","' + reqTitle + '","' + reqStatus + '","' + reqCategory + '","' + reqDesc + '"\\n';
+                    });
+                } else {
+                    console.log('No requirements found in report data');
+                    csvContent += '"No requirements data available"\\n';
+                }
+                
+                console.log('CSV content prepared, length:', csvContent.length);
+                
+                // Create and download file
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                
+                // Safe filename generation
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                const filename = "pci_dss_compliance_report_" + timestamp + ".csv";
+                link.setAttribute("download", filename);
+                
+                console.log('Downloading file:', filename);
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showFeedback('CSV report downloaded successfully!');
+                console.log('CSV export completed successfully');
+                
+            } catch (error) {
+                console.error('CSV export error:', error);
+                showFeedback('Export failed: ' + error.message, false);
+            }
+        }
+        
+        function exportToJSON() {
+            try {
+                console.log('JSON export started');
+                
+                // Get report data from the JSON script tag
+                const reportDataElement = document.getElementById('reportData');
+                if (!reportDataElement) {
+                    console.error('Report data element not found');
+                    showFeedback('Report data not found. Please refresh and try again.', false);
+                    return;
+                }
+                
+                console.log('Report data element found');
+                
+                let reportData;
+                try {
+                    reportData = JSON.parse(reportDataElement.textContent);
+                    console.log('Report data parsed successfully:', reportData);
+                } catch (parseError) {
+                    console.error('Failed to parse report data:', parseError);
+                    showFeedback('Invalid report data. Please refresh and try again.', false);
+                    return;
+                }
+                
+                // Create and download JSON file
+                const jsonString = JSON.stringify(reportData, null, 2);
+                console.log('JSON string created, length:', jsonString.length);
+                
+                const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                
+                // Safe filename generation
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                const filename = "pci_dss_compliance_report_" + timestamp + ".json";
+                link.download = filename;
+                
+                console.log('Downloading file:', filename);
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                
+                showFeedback('JSON report downloaded successfully!');
+                console.log('JSON export completed successfully');
+                
+            } catch (error) {
+                console.error('JSON export error:', error);
+                showFeedback('Export failed: ' + error.message, false);
+            }
+        }
+        
+        function copyToClipboard() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(function() {
+                // Show temporary success message
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+                btn.classList.remove('btn-info');
+                btn.classList.add('btn-success');
+                
+                setTimeout(function() {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-info');
+                }, 2000);
+            }).catch(function(err) {
+                alert('Failed to copy URL to clipboard');
+            });
+        }
+    </script>
+</body>
+</html>

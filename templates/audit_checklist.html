@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+
+{% block title %}PCI DSS Requirements Checklist - ACEP PCI DSS AUDIT ASSISTANT{% endblock %}
+
+{% block content %}
+<div class="modern-requirements">
+    <!-- Requirements Header -->
+    <div class="requirements-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="requirements-title">PCI DSS Requirements</h1>
+                <p class="requirements-subtitle">Manage and assess your payment card security compliance status with comprehensive requirement assessments</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openAssessmentModal('', '', '', '', '')">
+                    <i class="bi bi-plus-circle"></i>
+                    New Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Requirements Overview Stats -->
+    <div class="requirements-stats">
+        <div class="stat-item">
+            <div class="stat-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-compliant">0</div>
+                <div class="stat-label">Compliant</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon non-compliant">
+                <i class="bi bi-x-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-non-compliant">0</div>
+                <div class="stat-label">Non-Compliant</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon partial">
+                <i class="bi bi-exclamation-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-partial">0</div>
+                <div class="stat-label">Partial</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon pending">
+                <i class="bi bi-clock"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="stat-pending">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Requirements Section -->
+    <div class="requirements-section">
+        <div class="section-header">
+            <h3 class="section-title">Requirements Assessment</h3>
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="requirements-search" placeholder="Search requirements...">
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-status="all">All</button>
+            <button class="filter-btn" data-status="Compliant">Compliant</button>
+            <button class="filter-btn" data-status="Not Compliant">Non-Compliant</button>
+            <button class="filter-btn" data-status="Partially Compliant">Partial</button>
+            <button class="filter-btn" data-status="Not Assessed">Pending</button>
+        </div>
+    </div>
+
+    <!-- Category Sections -->
+    {% for category, requirements in categories.items() %}
+    <div class="category-section">
+        <div class="category-header">
+            <div class="category-info">
+                <h3 class="category-title">
+                    <i class="bi bi-shield-lock"></i>
+                    {{ category }}
+                </h3>
+                <p class="category-count">{{ requirements|length }} requirements in this category</p>
+            </div>
+            <button class="category-toggle" onclick="toggleCategory('{{ loop.index }}')">
+                <i class="bi bi-chevron-down" id="toggle-icon-{{ loop.index }}"></i>
+            </button>
+        </div>
+        
+        <div class="requirements-grid" id="category-{{ loop.index }}" style="display: block;">
+            {% for requirement in requirements %}
+            <div class="requirement-card" data-status="{{ requirement.status }}" data-title="{{ requirement.title|lower }}" data-id="{{ requirement.requirement_id|lower }}">
+                <div class="requirement-preview">
+                    <div class="requirement-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <div class="requirement-type">{{ requirement.requirement_id }}</div>
+                </div>
+                
+                <div class="requirement-info">
+                    <h4 class="requirement-name" title="{{ requirement.title }}">
+                        {{ requirement.title[:50] }}{% if requirement.title|length > 50 %}...{% endif %}
+                    </h4>
+                    
+                    <div class="requirement-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Status:</span>
+                            <span class="status-badge 
+                                {% if requirement.status == 'Compliant' %}compliant
+                                {% elif requirement.status == 'Not Compliant' %}non-compliant
+                                {% elif requirement.status == 'Not Applicable' %}not-applicable
+                                {% elif requirement.status == 'Partially Compliant' %}partial
+                                {% else %}pending{% endif %}">
+                                {{ requirement.status }}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Description:</span>
+                            <span class="requirement-description">{{ requirement.description[:80] }}{% if requirement.description|length > 80 %}...{% endif %}</span>
+                        </div>
+                        
+                        {% if requirement.notes %}
+                        <div class="detail-item">
+                            <span class="detail-label">Notes:</span>
+                            <span class="requirement-notes">{{ requirement.notes[:60] }}{% if requirement.notes|length > 60 %}...{% endif %}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="requirement-actions">
+                    <button class="action-btn assess-btn" 
+                            onclick="openAssessmentModal('{{ requirement.id }}', '{{ requirement.requirement_id }}', '{{ requirement.title }}', '{{ requirement.status }}', '{{ requirement.notes or '' }}')" 
+                            title="Assess">
+                        <i class="bi bi-clipboard-check"></i>
+                        Assess
+                    </button>
+                    <a href="{{ url_for('evidence') }}?requirement={{ requirement.requirement_id }}" 
+                       class="action-btn evidence-btn" title="View Evidence">
+                        <i class="bi bi-file-earmark-text"></i>
+                        Evidence
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    
+    <!-- Requirements Actions -->
+    <div class="requirements-actions">
+        <a href="{{ url_for('dashboard') }}" class="action-link">
+            <i class="bi bi-arrow-left"></i>
+            Back to Dashboard
+        </a>
+        <a href="{{ url_for('evidence') }}" class="action-link">
+            <i class="bi bi-file-earmark-arrow-up"></i>
+            Manage Evidence
+        </a>
+        <a href="{{ url_for('reports') }}" class="action-link primary">
+            <i class="bi bi-file-earmark-text"></i>
+            Generate Report
+        </a>
+    </div>
+
+    <!-- Assessment Modal -->
+    <div class="assessment-modal" id="assessmentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Assess Requirement</h3>
+                <button type="button" class="close-btn" onclick="closeAssessmentModal()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('update_requirement') }}" id="assessment-form">
+                    <input type="hidden" name="requirement_id" id="modal-requirement-id">
+                    
+                    <div class="form-group">
+                        <label>Compliance Status</label>
+                        <div class="status-options">
+                            <label class="status-option">
+                                <input type="radio" name="status" value="Compliant">
+                                <div class="status-card compliant">
+                                    <i class="bi bi-check-circle"></i>
+                                    <span>Compliant</span>
+                                </div>
+                            </label>
+                            
+                            <label class="status-option">
+                                <input type="radio" name="status" value="Not Compliant">
+                                <div class="status-card not-compliant">
+                                    <i class="bi bi-x-circle"></i>
+                                    <span>Not Compliant</span>
+                                </div>
+                            </label>
+                            
+                            <label class="status-option">
+                                <input type="radio" name="status" value="Partially Compliant">
+                                <div class="status-card partially-compliant">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    <span>Partially Compliant</span>
+                                </div>
+                            </label>
+                            
+                            <label class="status-option">
+                                <input type="radio" name="status" value="Not Applicable">
+                                <div class="status-card not-applicable">
+                                    <i class="bi bi-dash-circle"></i>
+                                    <span>Not Applicable</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="modal-notes">Assessment Notes</label>
+                        <textarea name="notes" id="modal-notes" placeholder="Describe your implementation, evidence, gaps, and remediation plans..." rows="6"></textarea>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="closeAssessmentModal()">
+                            <i class="bi bi-x-circle"></i>
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            <i class="bi bi-check-circle"></i>
+                            Save Assessment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    updateHeaderStats();
+    setupSearch();
+    setupFilters();
+});
+
+// Search functionality
+function setupSearch() {
+    const searchInput = document.getElementById('requirements-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const cards = document.querySelectorAll('.requirement-card');
+            
+            cards.forEach(card => {
+                const title = card.dataset.title || '';
+                const id = card.dataset.id || '';
+                
+                if (title.includes(searchTerm) || id.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+}
+
+// Filter functionality
+function setupFilters() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active state
+            filterButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const status = this.dataset.status;
+            const cards = document.querySelectorAll('.requirement-card');
+            
+            cards.forEach(card => {
+                if (status === 'all' || card.dataset.status === status) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+}
+
+// Update requirements stats
+function updateHeaderStats() {
+    const cards = document.querySelectorAll('.requirement-card');
+    let compliant = 0, nonCompliant = 0, partial = 0, pending = 0;
+    
+    cards.forEach(card => {
+        const status = card.dataset.status;
+        switch(status) {
+            case 'Compliant':
+                compliant++;
+                break;
+            case 'Not Compliant':
+                nonCompliant++;
+                break;
+            case 'Partially Compliant':
+                partial++;
+                break;
+            case 'Not Assessed':
+                pending++;
+                break;
+        }
+    });
+    
+    // Update stats
+    document.getElementById('stat-compliant').textContent = compliant;
+    document.getElementById('stat-non-compliant').textContent = nonCompliant;
+    document.getElementById('stat-partial').textContent = partial;
+    document.getElementById('stat-pending').textContent = pending;
+}
+
+// Search functionality
+function setupSearch() {
+    const searchInput = document.getElementById('requirements-search');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const cards = document.querySelectorAll('.requirement-card');
+            
+            cards.forEach(card => {
+                const title = card.dataset.title || '';
+                const id = card.dataset.id || '';
+                
+                if (title.includes(searchTerm) || id.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+}
+
+// Filter functionality
+function setupFilters() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active state
+            filterButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const status = this.dataset.status;
+            const cards = document.querySelectorAll('.requirement-card');
+            
+            cards.forEach(card => {
+                if (status === 'all' || card.dataset.status === status) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+}
+
+// Category toggle
+function toggleCategory(categoryIndex) {
+    const categoryGrid = document.getElementById('category-' + categoryIndex);
+    const toggleIcon = document.getElementById('toggle-icon-' + categoryIndex);
+    
+    if (categoryGrid.style.display === 'none') {
+        categoryGrid.style.display = 'block';
+        toggleIcon.className = 'bi bi-chevron-down';
+    } else {
+        categoryGrid.style.display = 'none';
+        toggleIcon.className = 'bi bi-chevron-right';
+    }
+}
+
+// Assessment modal functions
+function openAssessmentModal(id, requirementId, title, currentStatus, currentNotes) {
+    const modal = document.getElementById('assessmentModal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalRequirementId = document.getElementById('modal-requirement-id');
+    const modalNotes = document.getElementById('modal-notes');
+    
+    modalTitle.textContent = 'Assess: ' + title;
+    modalRequirementId.value = requirementId;
+    modalNotes.value = currentNotes;
+    
+    // Set current status
+    const statusRadios = document.querySelectorAll('input[name="status"]');
+    statusRadios.forEach(radio => {
+        radio.checked = radio.value === currentStatus;
+    });
+    
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeAssessmentModal() {
+    const modal = document.getElementById('assessmentModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('assessmentModal');
+    if (e.target === modal) {
+        closeAssessmentModal();
+    }
+});
+
+// Form submission handler
+document.getElementById('assessment-form').addEventListener('submit', function() {
+    const submitBtn = this.querySelector('.btn-primary');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}
