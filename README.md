@@ -2,12 +2,13 @@
 
 <div align="center">
 
-![ACEP PCI DSS](https://img.shields.io/badge/ACEP-PCI%20DSS%20Compliance%20Assistant-blue?style=for-the-badge&logo=shield-check&logoColor=white)
+![ACEP PCI DSS Audit](https://img.shields.io/badge/ACEP-PCI%20DSS%20Audit%20Assistant-blue?style=for-the-badge&logo=shield-check&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.8+-green?style=for-the-badge&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-2.3+-red?style=for-the-badge&logo=flask&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3+-purple?style=for-the-badge&logo=bootstrap&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=opensource&logoColor=white)
 
-**Professional Payment Card Industry Compliance & PCI DSS Assessment Tool**
+**Professional Payment Card Industry Compliance & PCI DSS Audit Management Tool**
 
 *Built for cybersecurity professionals, by cybersecurity professionals*
 
@@ -352,7 +353,7 @@ Our mission is to **democratize PCI DSS compliance** by providing professional-g
 
 🌐 [chaitanyaeshwarprasad.com](https://chaitanyaeshwarprasad.com) | 💼 [LinkedIn](https://linkedin.com/in/chaitanya-eshwar-prasad) | 🐙 [GitHub](https://github.com/chaitanyaeshwarprasad)
 
-🎥 [YouTube](https://youtube.com/@chaitanya.eshwar.prasad) | 📸 [Instagram](https://instagram.com/acep.tech.in.telugu) | ��️ [YesWeHack](https://yeswehack.com/hunters/chaitanya-eshwar-prasad)
+🎥 [YouTube](https://youtube.com/@chaitanya.eshwar.prasad) | 📸 [Instagram](https://instagram.com/acep.tech.in.telugu) | 🛡️ [YesWeHack](https://yeswehack.com/hunters/chaitanya-eshwar-prasad)
 
 ---
 
