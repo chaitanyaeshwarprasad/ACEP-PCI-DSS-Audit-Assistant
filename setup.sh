@@ -3,6 +3,9 @@
 # ACEP PCI DSS AUDIT ASSISTANT - Complete All-in-One Setup Script
 # Created by Chaitanya Eshwar Prasad
 # This script handles everything: system setup, Python installation, dependencies, and app setup
+# 
+# OPTIMIZATION: Full system upgrade is skipped for faster setup on Kali Linux.
+# Only essential packages are installed. Run 'sudo apt upgrade' manually later if needed.
 
 set -e  # Exit on any error
 
@@ -135,8 +138,9 @@ print_step "Step 4: Updating system packages..."
 print_status "Updating package lists..."
 $PKG_UPDATE
 
-print_status "Upgrading system packages..."
-$PKG_UPGRADE
+# Skip full system upgrade for fastest setup
+print_status "Skipping full system upgrade for fastest setup..."
+print_warning "Note: Full system upgrade skipped. Run 'sudo apt upgrade' manually later if needed."
 
 # Install system dependencies
 print_step "Step 5: Installing system dependencies..."
