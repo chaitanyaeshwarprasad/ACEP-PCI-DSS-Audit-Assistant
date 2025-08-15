@@ -21,7 +21,7 @@
 
 ## 🎯 **What is ACEP PCI DSS Audit Assistant?**
 
-The **ACEP PCI DSS Audit Assistant** is a comprehensive, enterprise-grade audit management system designed to streamline and automate PCI DSS (Payment Card Industry Data Security Standard) assessments. Built with modern web technologies and a focus on user experience, this tool empowers organizations to achieve and maintain full PCI DSS compliance through systematic evaluation, evidence management, and risk assessment.
+The **ACEP PCI DSS Audit Assistant** is a comprehensive, audit management system designed to streamline and automate PCI DSS (Payment Card Industry Data Security Standard) assessments. Built with modern web technologies and a focus on user experience, this tool empowers organizations to achieve and maintain full PCI DSS compliance through systematic evaluation, evidence management, and risk assessment.
 
 **🚀 One-Command Setup:** Simply run `./setup.sh` and everything is automatically configured and ready to use!
 
