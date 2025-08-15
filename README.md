@@ -46,6 +46,37 @@ The **ACEP PCI DSS Audit Assistant** is a comprehensive, enterprise-grade audit 
 - **4GB+ RAM** recommended
 - **500MB** free disk space
 
+## 🔧 **Installation & Setup**
+
+### **🚀 Quick Start Guide**
+
+#### **Step 1: Clone Repository**
+```bash
+# Clone the repository
+git clone https://github.com/chaitanyaeshwarprasad/ACEP-PCI-DSS-Audit-Assistant.git
+
+# Navigate to project directory
+cd ACEP-PCI-DSS-Audit-Assistant
+```
+
+#### **Step 2: Permissions**
+```bash
+# Permissions
+chmod +x *
+```
+
+#### **Step 3: Installation**
+```bash
+# Installation
+./setup.sh
+```
+
+#### **Step 4: Start Application**
+```bash
+# Start Application
+./run_acep_pci_dss.sh
+```
+
 ### **🚀 One-Command Setup**
 
 ```bash
